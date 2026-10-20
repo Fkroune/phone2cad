@@ -3,6 +3,7 @@
 *
 !requirements.lock
 !LICENSE
+!NOTICE
 !THIRD_PARTY.md
 !server/app
 !worker/scanfit_worker

@@ -31,6 +31,6 @@ Ubuntu), the NVIDIA CUDA runtime (NVIDIA's CUDA licence), Intel MKL (Intel
 Simplified Software License), Qt 6 (LGPL-3.0), and libraries bundled in the
 Python wheels (for example FFmpeg in OpenCV, LGPL). Their licence texts are in
 the image under `/usr/share/doc` and in each package's folder in
-`/opt/venv/lib/python3.12/site-packages`; ScanFit's own `LICENSE` and this file
+`/opt/venv/lib/python3.12/site-packages`; ScanFit's own `LICENSE`, `NOTICE` and this file
 are in `/usr/share/doc/scanfit/`. Each release also carries an SBOM
 attestation listing the image's packages.

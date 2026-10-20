@@ -30,7 +30,7 @@ zipfile.ZipFile('/tmp/sam.zip').extractall('/models/sam21_tiny')" \
 # OpenCV refuses to decode pictures above ~67 MP (the server already refuses frames above 64 MP).
 ENV SCANFIT_SAM_DIR=/models/sam21_tiny ORT_DISABLE_TELEMETRY=1 OPENCV_IO_MAX_IMAGE_PIXELS=67108864
 
-COPY LICENSE THIRD_PARTY.md /usr/share/doc/scanfit/
+COPY LICENSE NOTICE THIRD_PARTY.md /usr/share/doc/scanfit/
 COPY worker/scanfit_worker /app/worker/scanfit_worker
 COPY worker/third_party /app/worker/third_party
 COPY server/app /app/server/app
