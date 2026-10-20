@@ -181,13 +181,6 @@ def _snapshot_preview(preview, snaps: Path, cal, log) -> None:
         log(f"preview skipped: {e}")
 
 
-def _fused_preview(path: Path, zone) -> tuple[np.ndarray, np.ndarray]:
-    pc = o3d.io.read_point_cloud(str(path)).voxel_down_sample(0.5)
-    P, C = np.asarray(pc.points), (np.asarray(pc.colors) * 255).astype(np.uint8)
-    m = in_view_region(P, zone)
-    return P[m], C[m]
-
-
 def _grey_rgb(G: np.ndarray) -> np.ndarray:
     return (np.repeat(np.clip(G, 0, 1)[:, None], 3, 1) * 255).astype(np.uint8)
 
@@ -384,7 +377,8 @@ def _solve_side(side: Side, cm, work: Path, dense: str, use_gpu: bool, progress,
     ws = work / side.tag
     ws.mkdir(parents=True, exist_ok=True)
     state = ws / "state.pkl"
-    if os.environ.get("SCANFIT_RESUME") == "1" and state.exists():  # development: skip the camera solve
+    # Developer-only (CONTRIBUTING.md): unpickles a file this worker wrote itself; never set in the server.
+    if os.environ.get("SCANFIT_RESUME") == "1" and state.exists():  # skip the camera solve
         side.cal, side.model, side.used, side.stats, side.on_mat = pickle.loads(state.read_bytes())[:5]
         log(f"resumed {side.tag} from {state}")
     else:
@@ -705,12 +699,6 @@ def _hull_box(region, masks, parts, voxel: float, margin: float, points: bool = 
     m = 2.0 + margin * float((hi2 - lo2).max())
     box = (np.r_[lo2[:2] - m, 0.0], hi2 + m)
     return (box, X) if points else box
-
-
-def _box_of(P: np.ndarray):
-    lo, hi = P.min(0), P.max(0)
-    m = 3.0 + 0.1 * float((hi - lo).max())
-    return np.r_[lo[:2] - m, 0.0], hi + m
 
 
 def _outline(side: Side, cal, used, progress, preview, log, f, prefix) -> list[str]:

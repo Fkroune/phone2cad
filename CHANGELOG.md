@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.0.1 — maintenance
+
+Maintenance: removed unused code and dependencies; no behaviour change.
+
+- Removed unused code in the worker (`_fused_preview`, `_box_of`) and the
+  vendored Orbiter shell script `run_colmap_session.sh`, which ScanFit never
+  runs (licence, provenance and the script ScanFit uses stay).
+- The server now declares `starlette`, which it imports directly (the installed
+  set is unchanged).
+- `CONTRIBUTING.md` documents the developer-only switches `SCANFIT_RESUME` and
+  `SCANFIT_HOLES_DEBUG`.
+- The server and the app now report version 1.0.1.
+- Roadmap: slimming Open3D's unused optional packages from the image (not attempted).
+- Security review corrected: low-severity findings are 29 fixed and 7 open, not
+  28 and 8 (SUP-07 is closed by the clean repository).
+
 ## v1.0.0 — first public release
 
 ### Capture (phone)

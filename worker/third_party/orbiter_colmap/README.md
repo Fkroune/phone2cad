@@ -9,8 +9,8 @@ Version 2.0; the full text is in [`LICENSE`](LICENSE) next to this file.
 | File | Status in ScanFit |
 | --- | --- |
 | `sfm_priors_to_colmap.py` | Unmodified. Called by the worker to turn metric camera priors into a COLMAP text model synced to the feature database. |
-| `run_colmap_session.sh` | Unmodified, kept for reference. |
-| `../../scanfit_worker/colmap_session.py` | **Modified port** of `run_colmap_session.sh` to Python (see its header for the list of changes). |
+| `run_colmap_session.sh` | Not vendored (removed in ScanFit 1.0.1: ScanFit never runs it). It is in the upstream repository at the commit above. |
+| `../../scanfit_worker/colmap_session.py` | **Modified port** of upstream's `colmap/run_colmap_session.sh` to Python (see its header for the list of changes). |
 
 ScanFit's changes, in short:
 

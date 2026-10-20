@@ -50,7 +50,7 @@ RIM_SMOOTH_MM = 0.2  # photos smoothed this much before the rim is found (printe
 REG_MIN_PEAK = 0.1  # phase-correlation peak below this: a photo's shift is not trusted
 REG_MAX_MM = 3.0  # nor a shift larger than this
 SYSTEMATIC_MM = 0.15  # rim found slightly inside (synthetic Ø10: 9.78), chamfers: 1-sigma
-DEBUG_DIR = os.environ.get("SCANFIT_HOLES_DEBUG", "")
+DEBUG_DIR = os.environ.get("SCANFIT_HOLES_DEBUG", "")  # developer-only (CONTRIBUTING.md): writes scan photos there
 
 
 @dataclass

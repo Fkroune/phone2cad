@@ -219,7 +219,7 @@ Next: [the scanning guide](scanning-guide.md).
 
 ## Optional: a prebuilt server image
 
-To skip the 10–20 minute build, put `SCANFIT_IMAGE=ghcr.io/fkroune/scanfit:1.0.0`
+To skip the 10–20 minute build, put `SCANFIT_IMAGE=ghcr.io/fkroune/scanfit:1.0.1`
 in `.env`: `run-server` then downloads the image built for each release.
 
 ## Optional: host your own copy of the phone app

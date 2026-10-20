@@ -74,6 +74,12 @@ each should be closed.
   calls. Goal: move to a patched base digest and a newer OpenCV wheel as soon as
   they pass the synthetic acceptance; check with trivy and grype on every
   release.
+- **Slim the image.** Open3D pulls in an unused web and notebook stack (dash,
+  flask, werkzeug, ipywidgets, nbformat and more). Goal: install Open3D without
+  its optional packages plus only the subset ScanFit imports, re-generate the
+  hashed `requirements.lock` with `scripts/lock`, and keep the change only if
+  the synthetic acceptance passes in the hardened container (GPU and CPU).
+  Fewer packages also means fewer CVEs to track. Not yet tried.
 - **Signed images.** Releases on GHCR carry build provenance and an SBOM, but
   no signature. Goal: sign each release image with cosign (keyless, from the
   release workflow) and document how to verify it before `docker pull`.

@@ -39,8 +39,13 @@ your tailnet's access rules, and the hosting accounts' settings.
 | Critical | 0 | 0 | 0 |
 | High | 0 | 0 | 0 |
 | Medium | 4 | 4 | 0 |
-| Low | 36 | 28 | 8 |
+| Low | 36 | 29 | 7 |
 | Informational | 32 | 20 | 10 (one more concern was shown to be false, one needed no action) |
+
+Correction (v1.0.1): the first version of this table counted 28 low findings as
+fixed and 8 as open. One of the 8, SUP-07 (personal data in an earlier version
+of the repository history), is closed: this repository was created from a clean
+tree, and only its clean first commit is published. So 29 are fixed and 7 remain.
 
 ## What was fixed
 

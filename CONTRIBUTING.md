@@ -48,6 +48,28 @@ Measure the before and after with `python -m scanfit_worker.compare` against a
 CAD model, and say in the pull request what changed. Do not tune settings to
 one scan: a change must help, or at least not hurt, across several parts.
 
+## Developer-only switches
+
+These environment variables exist for working on the pipeline. The Docker
+setup (`docker-compose.yml`) does not pass them on, so a normal server never
+sees them; set them only when you run the worker yourself, for example
+`python -m scanfit_worker.pipeline JOB_DIR`, on frames you made.
+
+- `SCANFIT_RESUME=1`: reuse the camera solve (`work/<side>/state.pkl`) and the
+  dense points of an earlier run of the same job folder, to iterate on the later
+  stages without redoing the slow ones. The state file is a Python pickle that
+  the worker wrote itself; **never** point this at a job folder or file from
+  someone else, because unpickling runs code.
+- `SCANFIT_HOLES_DEBUG=/path/to/folder`: write each face's flattened photos
+  (`face01_<frame>.png`) there while holes are searched. These are scan photos:
+  the privacy rules apply, and nothing deletes the folder for you.
+
+Other `SCANFIT_*` variables that are not in `.env.example` (`SCANFIT_WORKER_CMD`,
+`SCANFIT_COLMAP`, `SCANFIT_COLMAP_IMAGE`, `SCANFIT_SEG_VIEWS`, `SCANFIT_SAM_*`,
+`SCANFIT_DENSE_CROP_MAX`, `SCANFIT_DENSE_TIMEOUT_S`, `SCANFIT_CPU_SIFT_THREADS`,
+`SCANFIT_GPU`, `SCANFIT_MAX_FRAMES`, `SCANFIT_MAX_FRAME_MB`, `SCANFIT_MAX_FRAME_MP`)
+are tuning and test settings; their defaults are what the release was tested with.
+
 ## Rules
 
 - **Privacy first.** No photos of rooms, no local paths, user names, host
