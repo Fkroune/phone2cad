@@ -1,7 +1,8 @@
 # Third-party software and models
 
 ScanFit itself is licensed under Apache-2.0 (`LICENSE`). It builds on the
-following; their licences apply to them.
+following; their licences apply to them. Attribution notices required for
+Apache-2.0 code we include are in [`NOTICE`](NOTICE).
 
 | Component | Used for | Licence | How it is included |
 |---|---|---|---|

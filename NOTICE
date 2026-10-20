@@ -1,0 +1,18 @@
+ScanFit
+Copyright 2026 Fkroune and contributors
+
+This product includes software developed as part of the ScanFit project
+(https://github.com/Fkroune/scanfit).
+
+This product includes software from Orbiter (https://github.com/RawMechatronicsOrg/Orbiter),
+Copyright (c) 2026 Orbiter contributors, licensed under the Apache License,
+Version 2.0: the file worker/third_party/orbiter_colmap/sfm_priors_to_colmap.py
+(unmodified) and, in modified form, the session flow in
+worker/scanfit_worker/colmap_session.py. Its licence text and provenance are in
+worker/third_party/orbiter_colmap/. Orbiter's repository has no NOTICE file of
+its own.
+
+The other components ScanFit builds on or ships, with their licences, are
+listed in THIRD_PARTY.md. None of the Apache-2.0 components listed there
+(SAM 2.1 and its ONNX export, OpenCV, OpenCV.js) carries a NOTICE file in its
+upstream repository, so no further notice text is reproduced here.

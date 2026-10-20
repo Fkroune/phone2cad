@@ -136,4 +136,9 @@ By using ScanFit, you acknowledge that it is experimental and that you are respo
 Apache-2.0 (see `LICENSE`). Third-party parts and their licences:
 [THIRD_PARTY.md](THIRD_PARTY.md). The test parts (the test block, the corner
 connector and the black jaw) and their STL files are ScanFit's own designs,
-under the same Apache-2.0 licence.
+under the same Apache-2.0 licence. Attribution notices are in
+[NOTICE](NOTICE).
+
+The ScanFit name and logo are not licensed under Apache-2.0; forks must use a
+different name. Future major versions may be released under a different
+licence; versions already released under Apache-2.0 remain so.

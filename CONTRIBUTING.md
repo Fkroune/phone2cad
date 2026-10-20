@@ -80,3 +80,6 @@ are tuning and test settings; their defaults are what the release was tested wit
 - Keep code and messages plain: short functions, comments that say why, and
   user-facing text a non-expert understands.
 - New code is licensed under Apache-2.0, like the rest of the project.
+  Unless you state otherwise, any contribution you submit for inclusion is
+  accepted under the Apache License 2.0 (section 5 of the licence), with no
+  additional terms: what you contribute is licensed the same way the project is.
