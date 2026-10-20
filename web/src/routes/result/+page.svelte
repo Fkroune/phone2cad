@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
+	import KeepToggle from '../../lib/KeepToggle.svelte';
 	import Viewer from '../../lib/Viewer.svelte';
 	import PreviewCloud from '../../lib/PreviewCloud.svelte';
 	import type { FaceRect, Highlight } from '../../lib/types';
@@ -290,11 +291,19 @@
 			<p class="muted small">
 				Your PC keeps this result for 24 hours. <button class="link" onclick={remove}>Remove it now</button>
 			</p>
+			{#if status?.keep}
+				<p class="muted small">
+					You asked your PC to keep the photos of this scan too: they are removed with the result.
+				</p>
+			{/if}
 		{/if}
 	{/if}
 </main>
 
-<div class="dock"><a class="btn wide" href={resolve('/scan')}>New scan</a></div>
+<div class="dock">
+	<KeepToggle />
+	<a class="btn wide" href={resolve('/scan')}>New scan</a>
+</div>
 
 <style>
 	.legend {

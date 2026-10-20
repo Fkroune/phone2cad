@@ -1,7 +1,8 @@
 """Job records (SQLite), on-disk job folders, the worker loop and expiry.
 
 The server keeps no personal data: a job is a random id, a status and
-timings. Frames live on disk only until the job ends; results expire after
+timings. Frames live on disk only until the job ends (unless the user switched on
+"keep photos" for that scan: then until the result expires); results expire after
 RESULT_TTL; job records after RECORD_TTL.
 """
 
@@ -88,17 +89,22 @@ class Store:
             db.execute("""CREATE TABLE IF NOT EXISTS jobs (
                 id TEXT PRIMARY KEY, status TEXT NOT NULL, frames INTEGER DEFAULT 0,
                 created REAL NOT NULL, started REAL, finished REAL, error TEXT)""")
+            cols = {r["name"] for r in db.execute("PRAGMA table_info(jobs)")}
+            if "keep" not in cols:  # databases from before the per-scan switch
+                db.execute("ALTER TABLE jobs ADD COLUMN keep INTEGER DEFAULT 0")
 
     def _db(self) -> sqlite3.Connection:
         con = sqlite3.connect(self.path, timeout=30)
         con.row_factory = sqlite3.Row
         return con
 
-    def create(self) -> str:
+    def create(self, keep: bool = False) -> str:
+        """keep: the user asked (per scan) to keep its photos until the result expires."""
         jid = new_id()
         (job_dir(jid) / "frames").mkdir(parents=True)
         with self.lock, self._db() as db:
-            db.execute("INSERT INTO jobs (id, status, created) VALUES (?, 'uploading', ?)", (jid, time.time()))
+            db.execute("INSERT INTO jobs (id, status, created, keep) VALUES (?, 'uploading', ?, ?)",
+                       (jid, time.time(), int(keep)))
         return jid
 
     def get(self, jid: str) -> sqlite3.Row | None:
@@ -271,10 +277,15 @@ class Worker(threading.Thread):
     def process(self, jid: str) -> tuple[bool, str | None]:
         d = job_dir(jid)
         ok, err = False, "processing stopped"
+        row = self.store.get(jid)
+        keep = bool(row and row["keep"])
+        env = {**os.environ, "PYTHONUNBUFFERED": "1"}
+        if keep:  # the worker must not delete the frames itself; they are moved below
+            env["SCANFIT_KEEP_FRAMES"] = "all"
         try:
             with open(d / "worker.log", "w") as wlog:
                 p = subprocess.Popen([*WORKER_CMD, str(d)], cwd=WORKER_DIR, stdout=wlog, stderr=subprocess.STDOUT,
-                                     env={**os.environ, "PYTHONUNBUFFERED": "1"}, start_new_session=True)
+                                     env=env, start_new_session=True)
                 try:
                     p.wait(timeout=JOB_TIMEOUT)
                 except subprocess.TimeoutExpired:
@@ -287,7 +298,7 @@ class Worker(threading.Thread):
                 err = None if ok else (prog.get("error") or f"processing stopped (code {p.returncode})")
         finally:
             try:
-                if (KEEP_FRAMES == "all" or (KEEP_FRAMES == "failed" and not ok)) and (d / "frames").is_dir():
+                if (keep or KEEP_FRAMES == "all" or (KEEP_FRAMES == "failed" and not ok)) and (d / "frames").is_dir():
                     _keep_for_debug(jid)
             except Exception:  # noqa: BLE001 - debugging aid only; the frames are deleted below
                 log.exception("could not keep job %s for debugging", jid[:8])

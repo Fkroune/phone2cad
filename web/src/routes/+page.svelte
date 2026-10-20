@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import KeepToggle from '../lib/KeepToggle.svelte';
 	import { resolve } from '$app/paths';
 	import { explain, health, localNetworkPermission, type NetPermission } from '../lib/api';
 	import { forgetPc, getServer, isPaired, lastJob, pair, pairingFromHash, parsePairing, pcHost, pcName, type Pairing } from '../lib/pc';
@@ -162,6 +163,7 @@
 </main>
 
 <div class="dock">
+	<KeepToggle />
 	<a class="btn wide" class:off={conn !== 'ok'} aria-disabled={conn !== 'ok'} href={conn === 'ok' ? resolve('/scan') : undefined}>
 		Start scanning
 	</a>

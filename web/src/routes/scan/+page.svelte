@@ -8,7 +8,7 @@
 	import { encodeJpeg, hasTorch, lockExposure, nextFrame, openCamera, setTorch, unlockExposure } from '../../lib/camera';
 	import { CAL_FRAMES, KeyframeSelector, MAX_FRAMES, MIN_FRAMES, thumbnail, type Analysis, type MatLayout, type View } from '../../lib/keyframes';
 	import { Motion } from '../../lib/motion';
-	import { getServer, pcName, rememberJob } from '../../lib/pc';
+	import { getKeepPhotos, getServer, pcName, rememberJob, setKeepPhotos } from '../../lib/pc';
 
 	const PREVIEW = 640;
 
@@ -59,7 +59,7 @@
 		total = frames.length;
 		sent = 0;
 		try {
-			jobId ??= (await createJob()).id;
+			jobId ??= (await createJob(getKeepPhotos())).id;
 			const id = jobId;
 			let next = 0;
 			const lane = async () => {
@@ -87,6 +87,7 @@
 		try {
 			await startJob(jobId!);
 			rememberJob(jobId!);
+			setKeepPhotos(false); // a choice for this scan only
 			await goto(resolve('/result') + `#job=${jobId}`);
 		} catch (e) {
 			phase = 'error';

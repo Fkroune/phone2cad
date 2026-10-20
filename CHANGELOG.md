@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- **Keep this scan's photos (optional, per scan).** A checkbox next to the scan
+  button (home page and result page) asks your PC to keep that one scan's photos
+  and COLMAP's working files until its result expires (24 hours), to diagnose a
+  bad result. Off by default, cleared when a scan starts, and removed with the
+  result (also by "Remove it now"). The privacy default is unchanged: without
+  the checkbox, photos are deleted when the job ends.
+
 ## v1.0.2 — maintenance
 
 NOTICE included in the container image; ScanFit icon replaces the framework's default.

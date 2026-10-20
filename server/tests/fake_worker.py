@@ -5,6 +5,7 @@ A file `mode` in the job folder picks a behaviour: "fail" (a failed scan),
 """
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -26,4 +27,5 @@ if mode == "fail":
 (job / "result" / "mesh.ply").write_bytes(b"ply\n")
 (job / "result" / "check.jpg").write_bytes(b"\xff\xd8\xff\xd9")
 (job / "progress.json").write_text(json.dumps({"status": "done", "stage": "done", "progress": 1.0}))
-shutil.rmtree(job / "frames")
+if os.environ.get("SCANFIT_KEEP_FRAMES") != "all":  # like the real worker: the server then moves them
+    shutil.rmtree(job / "frames")

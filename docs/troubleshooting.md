@@ -98,7 +98,9 @@ Yes. The CPU path is slower.
 It must fit in the clear centre of the mat, about 11 × 11 cm.
 
 **Where are my photos stored?**
-On your PC only, during processing. They are deleted when the job ends; the
+On your PC only, during processing. They are deleted when the job ends (unless
+you tick "Keep this scan's photos" before scanning, to diagnose a bad result:
+then they stay for 24 hours, like the result); the
 result keeps one small cropped photo of the part ("Does this match your
 part?") until the result expires. See [PRIVACY.md](../PRIVACY.md).
 

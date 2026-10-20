@@ -130,3 +130,26 @@ export function rememberJob(id: string): void {
 export function forgetJob(id: string): void {
 	if (read(JOB_KEY) === id) write(JOB_KEY, null);
 }
+
+// "Keep the photos of my next scan for 24 hours" (to diagnose a bad result). Per
+// scan and off by default: it lasts for this browser tab only and is cleared as
+// soon as a scan starts, so the default privacy promise (photos deleted when the
+// job ends) holds unless the user asks otherwise, every time.
+const KEEP_KEY = 'scanfit.keepPhotos';
+
+export function getKeepPhotos(): boolean {
+	try {
+		return sessionStorage.getItem(KEEP_KEY) === '1';
+	} catch {
+		return false;
+	}
+}
+
+export function setKeepPhotos(on: boolean): void {
+	try {
+		if (on) sessionStorage.setItem(KEEP_KEY, '1');
+		else sessionStorage.removeItem(KEEP_KEY);
+	} catch {
+		/* storage blocked: the choice simply does not stick */
+	}
+}

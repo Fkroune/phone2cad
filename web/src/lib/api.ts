@@ -101,8 +101,9 @@ export async function health(): Promise<void> {
 	await call('/api/session');
 }
 
-export async function createJob(): Promise<{ id: string; maxFrames: number }> {
-	const r = (await json(await call('/api/jobs', { method: 'POST' }), 4096)) as { id?: unknown; maxFrames?: unknown };
+/** keep: ask the PC to keep this scan's photos until its result expires (off by default). */
+export async function createJob(keep = false): Promise<{ id: string; maxFrames: number }> {
+	const r = (await json(await call(keep ? '/api/jobs?keep=1' : '/api/jobs', { method: 'POST' }), 4096)) as { id?: unknown; maxFrames?: unknown };
 	if (typeof r?.id !== 'string' || !/^[a-f0-9]{32}$/.test(r.id)) throw unreadable();
 	return { id: r.id, maxFrames: typeof r.maxFrames === 'number' ? r.maxFrames : 150 };
 }
@@ -144,6 +145,7 @@ export interface JobStatus {
 	frame_label?: string;
 	warnings?: string[]; // things the user should know, in plain words
 	elapsed_s?: number;
+	keep?: boolean; // the user asked the PC to keep this scan's photos as long as the result
 }
 
 /** Live preview while a job runs: flat xyz (mm) and rgb arrays, camera centres. */

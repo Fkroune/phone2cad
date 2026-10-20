@@ -13,7 +13,8 @@ address.
   any extra data after the image) is removed from every frame before it is
   saved on the PC.
 - The PC processes the photos and **deletes them when the job ends**, whether
-  it succeeded or failed. The same goes for COLMAP's working copies and the
+  it succeeded or failed (unless you tick "Keep this scan's photos" for that
+  scan, see [Debugging options](#debugging-options)). The same goes for COLMAP's working copies and the
   small live thumbnail shown while it works.
 - **Results** stay on your PC: the 3D copy (`mesh.ply`), the measurements
   (`features.json`), and one small **cropped photo of the part** with the 3D
@@ -67,11 +68,17 @@ their policies above.
 
 ## Debugging options
 
-`SCANFIT_KEEP_FRAMES=failed` or `all` keeps photos on your PC (in
-`data/server/debug/`) to help find problems. It is off by default, and
-`run-server` warns while it is on. If you turn it on, the photos may show your
-room: delete that folder when you are done, and never attach those photos to a
-public issue. Removing a scan from the result page also removes its kept copy.
+To help find out why a scan went wrong, you can ask your PC to keep the photos of
+one scan: tick **Keep this scan's photos on my PC for 24 hours** next to the
+scan button, on the home page or the result page. It is off by default, applies
+to the next scan only, and the photos (with COLMAP's working files) are kept in
+`data/server/debug/` on your PC until the result expires (24 hours,
+`SCANFIT_RESULT_TTL_H`) or you tap **Remove it now**, whichever comes first.
+The photos may show your room: never attach them to a public issue.
+
+For development, `SCANFIT_KEEP_FRAMES=failed` or `all` does the same for every
+scan (or every failed one) on that server. It is off by default, and
+`run-server` warns while it is on.
 
 ## Sharing results in issues
 

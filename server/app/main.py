@@ -174,12 +174,13 @@ def session():
 
 
 @app.post("/api/jobs", status_code=201)
-def create_job():
+def create_job(keep: bool = False):
+    """keep=1: the user's per-scan choice to keep the photos for as long as the result."""
     if store.queued_count() >= jobs.MAX_QUEUE or store.open_count() >= jobs.MAX_OPEN:
         raise HTTPException(429, "The PC is busy. Try again in a few minutes.")
     if jobs.free_bytes() < jobs.MIN_FREE_BYTES:
         raise HTTPException(507, "The PC is running out of disk space.")
-    return {"id": store.create(), "maxFrames": jobs.MAX_FRAMES, "maxFrameBytes": jobs.MAX_FRAME_BYTES}
+    return {"id": store.create(keep), "maxFrames": jobs.MAX_FRAMES, "maxFrameBytes": jobs.MAX_FRAME_BYTES}
 
 
 def _save_frame(jid: str, side: int, index: int, body: bytes) -> None:
@@ -256,7 +257,7 @@ def start_job(jid: str):
 @app.get("/api/jobs/{jid}")
 def job_status(jid: str):
     row = _job(jid)
-    out = {"id": jid, "status": row["status"], "frames": row["frames"]}
+    out = {"id": jid, "status": row["status"], "frames": row["frames"], "keep": bool(row["keep"])}
     if row["status"] == "queued":
         out.update(stage="queued", label="Waiting for the PC", progress=0.0,
                    position=store.queue_position(jid))

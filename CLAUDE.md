@@ -17,7 +17,7 @@ the printed mat so that nothing beyond the paper shows; strip all metadata.
   server address baked in (the phone gets it and the pairing token via
   `#server=…&token=…` at runtime, and stores them only after the user confirms).
   `scripts/deploy-web` refuses to deploy a bundle that fails its privacy scan.
-- `data/` and `.env` are gitignored. Uploaded frames are deleted when a job ends;
+- `data/` and `.env` are gitignored. Uploaded frames are deleted when a job ends (unless the user ticks "keep photos" for that scan: then when its result expires);
   results expire (default 24 h). EXIF is stripped on upload.
 
 ## Layout

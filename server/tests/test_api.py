@@ -226,6 +226,24 @@ def test_job_lifecycle(client):
     assert not jobs.job_dir(jid).exists()
 
 
+def test_keep_photos_is_per_scan_and_expires_with_the_result(client):
+    plain = client.post("/api/jobs").json()["id"]
+    kept = client.post("/api/jobs?keep=1").json()["id"]
+    assert client.get(f"/api/jobs/{plain}").json()["keep"] is False
+    assert client.get(f"/api/jobs/{kept}").json()["keep"] is True
+    for jid in (plain, kept):
+        upload(client, jid)
+        client.post(f"/api/jobs/{jid}/start")
+        assert wait_end(client, jid)["status"] == "done"
+    assert not (jobs.DATA / "debug" / plain).exists()  # the default: nothing is kept
+    assert len(list((jobs.DATA / "debug" / kept / "frames").glob("*.jpg"))) == 8
+    assert not (jobs.job_dir(kept) / "frames").exists()
+    # Past the result's lifetime the sweep removes the photos with the result.
+    main.store.update(kept, finished=time.time() - jobs.RESULT_TTL - 5)
+    main.store.sweep()
+    assert not (jobs.DATA / "debug" / kept).exists() and not jobs.job_dir(kept).exists()
+
+
 def test_failed_job_reports_and_cleans_up(client):
     jid = client.post("/api/jobs").json()["id"]
     upload(client, jid)
