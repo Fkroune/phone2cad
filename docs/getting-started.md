@@ -213,7 +213,17 @@ or team members) or devices you do not fully trust:
   "allow all" rule if you keep one);
 - do not share the PC with other tailnets (node sharing), and turn on device
   approval so new devices need your OK;
-- never enable Funnel for the PC: it would publish the server on the internet.
+- never enable Funnel for the PC: it would publish the server on the internet;
+- **on native Linux** (not Windows with WSL2, which is the tested setup),
+  Docker's own firewall rules can bypass `ufw` and similar tools. `run-server`
+  publishes the port on the PC's Tailscale address only, but to be sure that
+  devices on your local network cannot reach it either, add a rule such as
+  `sudo iptables -I DOCKER-USER ! -i tailscale0 -p tcp --dport 8443 -j DROP`
+  (it matches the container's port; make it permanent with your firewall
+  tooling, since it does not survive a reboot). Assumes Tailscale's standard
+  interface tailscale0 (not userspace-networking mode); the rule matches the
+  container port 8443 even if SCANFIT_PORT is changed. We have not tested this
+  on native Linux; please report what you find.
 
 Next: [the scanning guide](scanning-guide.md).
 

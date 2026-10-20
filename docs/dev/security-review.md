@@ -24,9 +24,9 @@ your tailnet's access rules, and the hosting accounts' settings.
 
 - Code review of every component, and a threat model.
 - Tests run: the server test suite (now 46 tests), the synthetic end-to-end
-  scan in a hardened container on the GPU and the CPU path, malicious and
-  malformed requests against a running server, malformed results in a headless
-  browser, and a capture of all network traffic of the server during start, a
+  scan in a hardened container on the GPU and the CPU path, malformed and
+  unauthorised requests against a running server, malformed results in a
+  headless browser, and a capture of all network traffic of the server during start, a
   full scan, a failed scan and shutdown (result: no traffic to the internet).
 - Tools: gitleaks (secrets in all history: none), trivy, syft and grype
   (image and SBOM), osv-scanner and npm audit, pip-audit, semgrep, bandit,
@@ -43,8 +43,8 @@ your tailnet's access rules, and the hosting accounts' settings.
 | Informational | 32 | 20 | 10 (one more concern was shown to be false, one needed no action) |
 
 Correction (v1.0.1): the first version of this table counted 28 low findings as
-fixed and 8 as open. One of the 8, SUP-07 (personal data in an earlier version
-of the repository history), is closed: this repository was created from a clean
+fixed and 8 as open. One of the 8, about personal data in an earlier version of
+the repository history, is closed: this repository was created from a clean
 tree, and only its clean first commit is published. So 29 are fixed and 7 remain.
 
 ## What was fixed
@@ -69,13 +69,18 @@ tree, and only its clean first commit is published. So 29 are fixed and 7 remain
 
 ## Known remaining risks (low)
 
-- The worker that reads your photos runs as the same user as the server, so a
-  flaw in an image decoder could expose the PC's TLS key and pairing code.
-- The container can reach the network, although ScanFit never uses it at
-  run time.
+- The worker that reads your photos runs as the same user as the server, so the
+  PC's TLS key and pairing code are not shielded from it. Keep the image up to
+  date; a separate worker user is planned.
+- The container is not blocked from the network, although ScanFit never uses it
+  at run time. Planned: block outgoing traffic.
+- On native Linux, Docker's own firewall rules can bypass `ufw` and similar
+  tools; this was not tested (the tested setup is Windows with WSL2). A rule
+  that limits the port to Tailscale is in
+  [getting started](../getting-started.md#who-can-reach-the-server).
 - Some operating-system packages and libraries in the base image have known
-  vulnerabilities in parts ScanFit does not use (GnuPG, DTLS, the video codecs
-  bundled with OpenCV). They will be updated with the base image.
+  published advisories in parts ScanFit does not use (GnuPG, DTLS, the video
+  codecs bundled with OpenCV). They will be updated with the base image.
 - Who can reach the server depends on your tailnet's rules; see
   [getting started](../getting-started.md#who-can-reach-the-server).
 - Licence notices for everything inside the prebuilt image are being reviewed.

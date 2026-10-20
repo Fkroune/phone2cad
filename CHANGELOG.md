@@ -14,7 +14,7 @@ Maintenance: removed unused code and dependencies; no behaviour change.
 - The server and the app now report version 1.0.1.
 - Roadmap: slimming Open3D's unused optional packages from the image (not attempted).
 - Security review corrected: low-severity findings are 29 fixed and 7 open, not
-  28 and 8 (SUP-07 is closed by the clean repository).
+  28 and 8 (one finding is closed by the clean repository).
 
 ## v1.0.0 — first public release
 

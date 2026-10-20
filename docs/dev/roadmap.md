@@ -64,8 +64,8 @@ each should be closed.
   with all outgoing traffic blocked, for example an internal Docker network
   behind a small port-forwarding proxy, or firewall rules set up by `run-server`.
 - **Keep the TLS key and the pairing code away from the worker.** The worker
-  decodes untrusted photos and runs as the same user as the server, so a flaw
-  in an image decoder could read both. Goal: run the worker under its own user
+  decodes photos and runs as the same user as the server, so the key and code
+  are not shielded from it. Goal: run the worker under its own user
   ID without access to `/run/scanfit`, or end TLS outside the container (for
   example in a reverse proxy) so the key never enters it.
 - **Base image and OpenCV updates.** The pinned base image carries known CVEs
