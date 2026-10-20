@@ -5,7 +5,7 @@
 # opens the phone app already paired with this PC.
 # Needs: Tailscale running with HTTPS enabled for the tailnet, and
 #        `sudo tailscale set --operator=$USER` once so certs can be fetched.
-# Prebuilt image: set SCANFIT_IMAGE (e.g. ghcr.io/fkroune/scanfit:1.0.2) to pull
+# Prebuilt image: set SCANFIT_IMAGE (e.g. ghcr.io/fkroune/scanfit:1.0.3) to pull
 # it instead of building locally.
 # The pairing link carries a random token: only a phone that opened it can use
 # the server. `scripts/run-server --new-token` makes a new one (re-pair phones).

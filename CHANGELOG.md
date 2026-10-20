@@ -1,13 +1,23 @@
 # Changelog
 
-## Unreleased
+## v1.0.3
 
+Warnings for scans that can come out wrong without failing, an optional per-scan switch to
+keep the photos, and setup-check help.
+
+- **A weak scan now says so.** The result page lists a note when fewer than 40 % of the
+  photos showed the whole mat, and when the two sides of a scan could not be lined up
+  reliably (the 3D copy may then be incomplete or too small). Before, such a scan ended
+  "Done" with a confident but wrong size.
 - **Keep this scan's photos (optional, per scan).** A checkbox next to the scan
   button (home page and result page) asks your PC to keep that one scan's photos
   and COLMAP's working files until its result expires (24 hours), to diagnose a
   bad result. Off by default, cleared when a scan starts, and removed with the
   result (also by "Remove it now"). The privacy default is unchanged: without
   the checkbox, photos are deleted when the job ends.
+- `scripts/setup-check` warns when `qrencode` is missing; the getting-started guide says
+  where the pairing QR code appears. `scripts/privacy-scan` prints a summary line when clean.
+- The server and the app now report version 1.0.3.
 
 ## v1.0.2 — maintenance
 

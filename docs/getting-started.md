@@ -68,7 +68,8 @@ cd scanfit
 cp .env.example .env
 ```
 
-`qrencode` draws the pairing QR code in the terminal later. Keep the folder in
+`qrencode` draws the pairing QR code in the terminal when the server starts
+(step 5). Keep the folder in
 your Ubuntu home (`~`), not in a Windows folder (`/mnt/c/…`): your scans are
 stored in it (`data/server/`), and on a Windows drive Linux file permissions do
 not apply, so any Windows program (and backup or sync tools) could read them.
@@ -145,8 +146,12 @@ about 110 MB, from Hugging Face; a fixed version, checked against its
 checksum), which finds the part's outline in each photo. The finished image
 takes about 12 GB of disk. Later starts take seconds.
 
-At the end, `run-server` prints the server's private address and a QR code.
-The first start also creates the PC's **pairing code** (in
+At the end, `run-server` prints the server's private address and a QR code, in
+the same terminal window, just above the long pairing link. The QR code needs
+`qrencode` (installed in step 3; `scripts/setup-check` warns if it is missing).
+Without it, only the link is printed: install it with `sudo apt install
+qrencode`, run `scripts/run-server` again, or type the link into the phone's
+browser by hand. The first start also creates the PC's **pairing code** (in
 `~/.config/scanfit/token`, readable only by you); the QR code and the link
 below it contain it. Treat that link like a password: anyone in your tailnet
 who has it can send scans to your PC and read your results.
@@ -229,7 +234,7 @@ Next: [the scanning guide](scanning-guide.md).
 
 ## Optional: a prebuilt server image
 
-To skip the 10–20 minute build, put `SCANFIT_IMAGE=ghcr.io/fkroune/scanfit:1.0.2`
+To skip the 10–20 minute build, put `SCANFIT_IMAGE=ghcr.io/fkroune/scanfit:1.0.3`
 in `.env`: `run-server` then downloads the image built for each release.
 
 ## Optional: host your own copy of the phone app

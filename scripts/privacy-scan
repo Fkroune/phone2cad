@@ -68,7 +68,8 @@ def main() -> int:
     if suffix:
         literal["this tailnet's name"] = re.escape(suffix)
     found = 0
-    for f in sorted(p for p in root.rglob("*") if p.is_file()):
+    files = sorted(p for p in root.rglob("*") if p.is_file())
+    for f in files:
         rel = f.relative_to(root)
         if f.suffix == ".map":
             print(f"source map: {rel}")
@@ -85,6 +86,8 @@ def main() -> int:
                 print(f"{name}: {rel} (offset {m.start()})")
                 found += 1
                 break
+    if not found:
+        print(f"privacy-scan: {len(files)} files, nothing found")
     return 1 if found else 0
 
 

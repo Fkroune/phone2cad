@@ -46,6 +46,21 @@ STAGES = {
 }
 
 
+# A scan whose photos rarely show the whole mat, or whose two sides could not be
+# confirmed against each other, can come out too small yet look plausible: say so.
+MIN_MAT_SHARE = 0.4
+UNCONFIRMED_SIDES = ("The two sides could not be lined up reliably, so the 3D copy may be incomplete or too "
+                     "small. Compare it with the part, and film again with more of the mat in view.")
+
+
+def mat_view_warning(on_mat: int, frames: int, prefix: str = "") -> str | None:
+    """A note for the user when too few photos showed the whole mat, else None."""
+    if on_mat >= MIN_MAT_SHARE * frames:
+        return None
+    return (f"{prefix}Only {on_mat} of {frames} photos showed the whole mat. Film from a bit farther, so the "
+            "whole mat is in view most of the time: the camera positions and the size depend on it.")
+
+
 class LazyFrames:
     """Grey frames loaded on demand with a small cache (phones send big images)."""
 
@@ -298,6 +313,8 @@ def _locate(side: Side, cm, ws: Path, progress, preview, log, f, prefix: str) ->
     on_mat = [n for n in side.names if n in cal.poses]
     progress.stat(f"{prefix}Frames showing the whole mat", f"{len(on_mat)}/{len(side.names)}")
     progress.stat(f"{prefix}Lens fit", f"{cal.rms_px:.1f} px")
+    if note := mat_view_warning(len(on_mat), len(side.names), prefix):
+        progress.warn(note)
     if cal.bend_mm > 0.5:
         progress.stat(f"{prefix}Mat bend", f"{cal.bend_mm:.1f} mm")
     if cal.bend_mm > 1.0:
@@ -773,7 +790,7 @@ def _outline(side: Side, cal, used, progress, preview, log, f, prefix) -> list[s
     side.box = (np.r_[box[0][:2], 0.0], box[1])
     return names
 
-def _align_sides(a: Side, b: Side, log) -> tuple[np.ndarray, float]:
+def _align_sides(a: Side, b: Side, log, warn=lambda msg: None) -> tuple[np.ndarray, float]:
     """4x4 taking side b's mat coordinates into side a's: the part was flipped
     and moved. Rough match of the two hulls' shapes (each side's own carving),
     then point-to-plane ICP on the dense points near them (the true surfaces).
@@ -842,8 +859,10 @@ def _align_sides(a: Side, b: Side, log) -> tuple[np.ndarray, float]:
             log(f"refined on the dense points: fitness {fine.fitness:.2f}, rms {fine.inlier_rmse:.2f} mm")
         else:
             log(f"dense points did not agree well enough to refine (fitness {fine.fitness:.2f})")
+            warn(UNCONFIRMED_SIDES)
     else:
         log(f"too few dense points near the outlines to refine ({len(da.points)}, {len(db.points)})")
+        warn(UNCONFIRMED_SIDES)
     return np.asarray(T), float(rms)
 
 
@@ -893,7 +912,7 @@ def run(job: Path, dense: str = "auto", max_image_size: int = 1600, keep: bool =
         if two:
             s2 = sides[1]
             progress("measure", 0.85, step="Lining up the two sides")
-            T, rms = _align_sides(s1, s2, log)
+            T, rms = _align_sides(s1, s2, log, progress.warn)
             Ti = np.linalg.inv(T)
             A, B = _coarse_shape(s1.box, s1.masks), _coarse_shape(s2.box, s2.masks)
             if A is not None and B is not None:  # side 1 blue, side 2 orange, where the match put it

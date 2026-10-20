@@ -47,6 +47,13 @@ else
   warn "No NVIDIA GPU found: scans will use the CPU path (works, but slower)."
 fi
 
+# --- QR code ----------------------------------------------------------------------
+if command -v qrencode >/dev/null; then
+  pass "qrencode is installed: scripts/run-server will print the pairing QR code in this terminal."
+else
+  warn "qrencode is not installed: scripts/run-server cannot draw the pairing QR code (it prints the link instead). Install it: sudo apt install qrencode"
+fi
+
 # --- Memory and disk ---------------------------------------------------------------
 mem_gb=$(awk '/MemTotal/ {printf "%d", $2 / 1024 / 1024}' /proc/meminfo 2>/dev/null || echo 0)
 if [ "${mem_gb:-0}" -ge 7 ]; then
