@@ -1,0 +1,13 @@
+data/
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+node_modules/
+web/build/
+web/.svelte-kit/
+web/.wrangler/
+
+# Local development notes (not published)
+docs/dev/HISTORY.md

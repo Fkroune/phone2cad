@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# Start the ScanFit server (docker compose) on this PC, reachable over Tailscale
+# only: HTTPS with this machine's Tailscale certificate, port bound to the
+# Tailscale IP. Never exposed to the public internet. Prints a QR code that
+# opens the phone app already paired with this PC.
+# Needs: Tailscale running with HTTPS enabled for the tailnet, and
+#        `sudo tailscale set --operator=$USER` once so certs can be fetched.
+# Prebuilt image: set SCANFIT_IMAGE (e.g. ghcr.io/fkroune/scanfit:1.0.0) to pull
+# it instead of building locally.
+# The pairing link carries a random token: only a phone that opened it can use
+# the server. `scripts/run-server --new-token` makes a new one (re-pair phones).
+set -euo pipefail
+NEW_TOKEN=0
+if [ "${1:-}" = "--new-token" ]; then NEW_TOKEN=1; shift; fi
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+# The public phone app. Override with SCANFIT_APP_URL in .env if you host your own copy.
+DEFAULT_APP_URL="https://scanfit-app.pages.dev"
+
+[ -f .env ] && { set -a; . ./.env; set +a; }
+APP_URL="${SCANFIT_APP_URL:-$DEFAULT_APP_URL}"
+APP_URL="${APP_URL%/}"
+[ -n "$APP_URL" ] || { echo "set SCANFIT_APP_URL in .env (the phone app's address, https://...)" >&2; exit 1; }
+# The server accepts requests from the phone app's origin only (CORS).
+export SCANFIT_WEB_ORIGIN="${SCANFIT_WEB_ORIGIN:-$(python3 -c 'import sys; from urllib.parse import urlsplit as u; p = u(sys.argv[1]); print(f"{p.scheme}://{p.netloc}")' "$APP_URL")}"
+
+[ "$(id -u)" != 0 ] || { echo "run this as your normal user, not root (the server must not run as root)" >&2; exit 1; }
+command -v tailscale >/dev/null || { echo "install Tailscale in WSL: see https://tailscale.com/download/linux" >&2; exit 1; }
+NAME="$(tailscale status --json | python3 -c 'import json,sys; print(json.load(sys.stdin)["Self"]["DNSName"].rstrip("."))')"
+IP="$(tailscale ip -4 | head -1)"
+[ -n "$NAME" ] && [ -n "$IP" ] || { echo "tailscale is not up (run: sudo tailscale up)" >&2; exit 1; }
+
+# Certs and the token live on the WSL filesystem: on /mnt/<drive> chmod is ignored
+# and they would be readable by every Windows program.
+CONF="$HOME/.config/scanfit"
+export SCANFIT_CERT_DIR="${SCANFIT_CERT_DIR:-$CONF/certs}"
+export SCANFIT_TOKEN_FILE="${SCANFIT_TOKEN_FILE:-$CONF/token}"
+export SCANFIT_DATA_DIR="${SCANFIT_DATA_DIR:-$ROOT/data/server}"
+for d in "$SCANFIT_CERT_DIR" "$SCANFIT_TOKEN_FILE"; do
+  case "$(realpath -m "$d")" in /mnt/*) echo "$d is on a Windows drive (no file permissions): keep it under \$HOME" >&2; exit 1;; esac
+done
+case "$(realpath -m "$SCANFIT_DATA_DIR")" in
+  /mnt/*) echo "WARNING: scans are stored on a Windows drive ($SCANFIT_DATA_DIR): any Windows program can read them," >&2
+          echo "         and backup or sync tools may copy them. Set SCANFIT_DATA_DIR in .env to a folder under \$HOME." >&2;;
+esac
+if [ -n "${SCANFIT_KEEP_FRAMES:-}" ] || [ "${SCANFIT_KEEP_FAILED:-0}" = 1 ]; then
+  echo "WARNING: SCANFIT_KEEP_FRAMES is set: scan photos are KEPT in data/server/debug/ (debugging only)." >&2
+fi
+mkdir -p "$SCANFIT_CERT_DIR" "$SCANFIT_DATA_DIR" "$(dirname "$SCANFIT_TOKEN_FILE")"
+chmod 700 "$SCANFIT_CERT_DIR" "$(dirname "$SCANFIT_TOKEN_FILE")"
+CRT="$SCANFIT_CERT_DIR/server.crt" KEY="$SCANFIT_CERT_DIR/server.key"
+# Tailscale certs last 90 days; refresh when older than 30.
+if [ ! -s "$CRT" ] || [ -n "$(find "$CRT" -mtime +30)" ]; then
+  tailscale cert --cert-file "$CRT" --key-file "$KEY" "$NAME"
+  NEW_CERT=1
+fi
+chmod 600 "$KEY"
+
+# Pairing token: random, mode 600, outside data/. New on first start or with --new-token.
+if [ "$NEW_TOKEN" = 1 ] || [ ! -s "$SCANFIT_TOKEN_FILE" ]; then
+  (umask 077; python3 -c 'import secrets; print(secrets.token_urlsafe(32))' > "$SCANFIT_TOKEN_FILE.new")
+  mv "$SCANFIT_TOKEN_FILE.new" "$SCANFIT_TOKEN_FILE"
+  NEW_TOKEN=1
+fi
+chmod 600 "$SCANFIT_TOKEN_FILE"
+TOKEN="$(cat "$SCANFIT_TOKEN_FILE")"
+# The server reads the token and the certificate when it starts.
+RECREATE=(); { [ "$NEW_TOKEN" = 1 ] || [ "${NEW_CERT:-0}" = 1 ]; } && RECREATE=(--force-recreate)
+
+export SCANFIT_BIND="$IP" SCANFIT_UID="$(id -u)" SCANFIT_GID="$(id -g)" SCANFIT_PORT="${SCANFIT_PORT:-8443}"
+if [ -n "${SCANFIT_IMAGE:-}" ]; then
+  docker compose pull
+  docker compose up -d --no-build "${RECREATE[@]}" "$@"
+else
+  docker compose up -d --build "${RECREATE[@]}" "$@"
+fi
+
+SERVER="https://$NAME:$SCANFIT_PORT"
+PAIR="$APP_URL/#server=$SERVER&token=$TOKEN"
+echo "Server: $SERVER  (Tailscale only)"
+echo "Phone: scan this code with the phone's camera (or open the address below)."
+echo "The phone must be signed in to the same Tailscale network."
+echo "The link contains this PC's pairing code: treat it like a password and do not share it."
+if command -v qrencode >/dev/null; then
+  qrencode -t ANSIUTF8 -m 2 "$PAIR"
+else
+  echo "(Install qrencode to see a QR code here: sudo apt install qrencode)"
+fi
+echo "$PAIR"

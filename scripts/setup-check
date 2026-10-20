@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# Checks that this PC is ready to run the ScanFit server. Changes nothing
+# (it reads .env, which is a shell file: keep only KEY=value lines in it).
+# Each line says PASS, WARN (works, but not ideal) or FAIL (fix this first).
+set -uo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+fails=0 warns=0
+pass() { printf 'PASS  %s\n' "$1"; }
+warn() { printf 'WARN  %s\n' "$1"; warns=$((warns + 1)); }
+fail() { printf 'FAIL  %s\n' "$1"; fails=$((fails + 1)); }
+
+echo "ScanFit setup check"
+echo
+
+# --- Settings file ------------------------------------------------------------
+if [ -f .env ]; then
+  pass "Settings file .env found."
+  set -a; . ./.env; set +a
+else
+  fail "No settings file. Run: cp .env.example .env   then edit it."
+fi
+
+# --- Docker ---------------------------------------------------------------------
+if ! command -v docker >/dev/null; then
+  fail "Docker is not installed. Install Docker (on Windows: Docker Desktop with WSL2)."
+elif ! docker info >/dev/null 2>&1; then
+  fail "Docker is installed but not running, or your user may not use it. Start Docker; on Linux add yourself to the 'docker' group."
+else
+  pass "Docker is running."
+  if docker compose version >/dev/null 2>&1; then
+    pass "Docker Compose is available."
+  else
+    fail "Docker Compose is missing. Install the Docker Compose plugin."
+  fi
+fi
+
+# --- GPU or CPU -----------------------------------------------------------------
+if command -v nvidia-smi >/dev/null && nvidia-smi -L >/dev/null 2>&1; then
+  gpu="$(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader 2>/dev/null | head -1)"
+  if docker info 2>/dev/null | grep -qi nvidia; then
+    pass "NVIDIA GPU found ($gpu) and Docker can use it: the fast path (CUDA) will be used."
+  else
+    warn "NVIDIA GPU found ($gpu), but Docker cannot use it yet. Install the NVIDIA Container Toolkit, or scans will use the slower CPU path."
+  fi
+else
+  warn "No NVIDIA GPU found: scans will use the CPU path (works, but slower)."
+fi
+
+# --- Memory and disk ---------------------------------------------------------------
+mem_gb=$(awk '/MemTotal/ {printf "%d", $2 / 1024 / 1024}' /proc/meminfo 2>/dev/null || echo 0)
+if [ "${mem_gb:-0}" -ge 7 ]; then
+  pass "Memory: ${mem_gb} GB."
+else
+  warn "Memory: ${mem_gb} GB. 8 GB or more is recommended (on WSL2, raise it in .wslconfig)."
+fi
+free_gb=$(df -Pk "$ROOT" | awk 'NR == 2 {printf "%d", $4 / 1024 / 1024}')
+if [ "${free_gb:-0}" -ge 20 ]; then
+  pass "Free disk space: ${free_gb} GB."
+else
+  warn "Free disk space: ${free_gb} GB. The server image and scans need about 20 GB."
+fi
+
+# --- Network: Tailscale and certificates ------------------------------------------
+if ! command -v tailscale >/dev/null; then
+  fail "Tailscale is not installed. Install it (https://tailscale.com/download) and sign in on this PC and on your phone. ScanFit works over Tailscale only."
+elif ! tailscale status >/dev/null 2>&1; then
+  fail "Tailscale is installed but not connected. Run: sudo tailscale up"
+else
+  pass "Tailscale is connected."
+  name="$(tailscale status --json 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin)["Self"]["DNSName"].rstrip("."))' 2>/dev/null || true)"
+  [ -n "$name" ] && pass "This PC's private address: https://$name:${SCANFIT_PORT:-8443}"
+  cert_dir="${SCANFIT_CERT_DIR:-$HOME/.config/scanfit/certs}"
+  crt="$cert_dir/server.crt"
+  if [ -s "$crt" ]; then
+    if openssl x509 -checkend 864000 -noout -in "$crt" >/dev/null 2>&1; then
+      pass "HTTPS certificate found and valid for at least 10 more days."
+    else
+      warn "HTTPS certificate expires within 10 days or is unreadable: scripts/run-server renews it."
+    fi
+  else
+    warn "No HTTPS certificate yet: scripts/run-server will fetch one. Enable HTTPS certificates in your Tailscale admin page, and run once: sudo tailscale set --operator=\$USER"
+  fi
+  key="$cert_dir/server.key"
+  if [ -e "$key" ] && [ "$(stat -c %a "$key")" != 600 ]; then
+    fail "The HTTPS private key ($key) is readable by others. Run: chmod 600 \"$key\""
+  fi
+fi
+
+# --- Pairing code and stored scans ---------------------------------------------------
+token="${SCANFIT_TOKEN_FILE:-$HOME/.config/scanfit/token}"
+if [ ! -e "$token" ]; then
+  pass "Pairing code: scripts/run-server will create one."
+elif [ "$(stat -c %a "$token")" = 600 ]; then
+  pass "Pairing code found, readable only by you."
+else
+  fail "The pairing code ($token) is readable by others. Run: chmod 600 \"$token\""
+fi
+data="${SCANFIT_DATA_DIR:-$ROOT/data/server}"
+case "$(realpath -m "$data")" in
+  /mnt/*) warn "Scans are stored on a Windows drive ($data): any Windows program, and backup or sync tools, can read them. Set SCANFIT_DATA_DIR in .env to a folder under your Linux home.";;
+  *) pass "Scans are stored on the Linux file system.";;
+esac
+if [ -n "${SCANFIT_KEEP_FRAMES:-}" ] || [ "${SCANFIT_KEEP_FAILED:-0}" = 1 ]; then
+  warn "SCANFIT_KEEP_FRAMES is set: scan photos are kept in data/server/debug/ (debugging only). Empty it in .env when done, and delete that folder."
+fi
+
+# --- Phone app address ---------------------------------------------------------------
+if [ -n "${SCANFIT_APP_URL:-}" ] || [ -n "${SCANFIT_WEB_ORIGIN:-}" ]; then
+  pass "Phone app address: ${SCANFIT_APP_URL:-$SCANFIT_WEB_ORIGIN}"
+else
+  warn "No phone app address in .env: the default public app is used (see SCANFIT_APP_URL in .env.example)."
+fi
+
+# --- Mat scale ---------------------------------------------------------------------
+v="${SCANFIT_MAT_10_SQUARES_MM:-}"
+if [ -z "$v" ]; then
+  warn "Mat scale not set. Print the mat at 100 %, measure 10 squares of the printed ring with a ruler, and put the length in .env as SCANFIT_MAT_10_SQUARES_MM (150 if exact)."
+elif python3 -c "import sys; v = float(sys.argv[1]); sys.exit(0 if 135 <= v <= 165 else 1)" "$v" 2>/dev/null; then
+  pct=$(python3 -c "import sys; print(f'{(float(sys.argv[1]) / 150 - 1) * 100:+.1f}')" "$v")
+  pass "Mat scale: 10 squares = $v mm (printer scaling ${pct} %)."
+else
+  fail "Mat scale SCANFIT_MAT_10_SQUARES_MM=$v looks wrong: 10 squares should measure about 150 mm."
+fi
+
+echo
+if [ "$fails" -gt 0 ]; then
+  echo "Result: $fails problem(s) to fix, $warns warning(s). See docs/troubleshooting.md."
+  exit 1
+fi
+echo "Result: ready ($warns warning(s)). Start the server with: scripts/run-server"

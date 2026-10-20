@@ -1,0 +1,60 @@
+# ScanFit server + worker on the PC. Reachable over Tailscale only: the port is
+# published on the Tailscale IP (SCANFIT_BIND, set by scripts/run-server).
+# No tunnel, no public exposure.
+services:
+  scanfit:
+    build: .
+    image: "${SCANFIT_IMAGE:-scanfit:local}"
+    restart: unless-stopped
+    user: "${SCANFIT_UID:-1000}:${SCANFIT_GID:-1000}"
+    # Hardening: no root, no Linux capabilities, no privilege escalation, a
+    # read-only system (writes go to /data and /tmp only), an init process that
+    # reaps finished COLMAP processes, and a process limit.
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    ports:
+      - "${SCANFIT_BIND:-127.0.0.1}:${SCANFIT_PORT:-8443}:8443"
+    environment:
+      SCANFIT_PORT: "8443"
+      SCANFIT_WEB_ORIGIN: "${SCANFIT_WEB_ORIGIN:?run via scripts/run-server}"
+      SCANFIT_TLS_CERT: /certs/server.crt
+      SCANFIT_TLS_KEY: /certs/server.key
+      SCANFIT_TOKEN_FILE: /run/scanfit/token
+      SCANFIT_DENSE: "${SCANFIT_DENSE:-auto}"
+      SCANFIT_MAX_IMAGE_SIZE: "${SCANFIT_MAX_IMAGE_SIZE:-1600}"
+      SCANFIT_DENSE_IMAGE_SIZE: "${SCANFIT_DENSE_IMAGE_SIZE:-1000}"
+      SCANFIT_KEEP_FAILED: "${SCANFIT_KEEP_FAILED:-0}"
+      SCANFIT_KEEP_FRAMES: "${SCANFIT_KEEP_FRAMES:-}"
+      SCANFIT_SFM_MODE: "${SCANFIT_SFM_MODE:-register}"
+      SCANFIT_MAT_10_SQUARES_MM: "${SCANFIT_MAT_10_SQUARES_MM:-}"
+      SCANFIT_DENSE_MAX_FRAMES: "${SCANFIT_DENSE_MAX_FRAMES:-32}"
+      SCANFIT_RESULT_TTL_H: "${SCANFIT_RESULT_TTL_H:-24}"
+      SCANFIT_MAX_QUEUE: "${SCANFIT_MAX_QUEUE:-5}"
+      SCANFIT_MAX_OPEN: "${SCANFIT_MAX_OPEN:-8}"
+      SCANFIT_MAX_JOB_MB: "${SCANFIT_MAX_JOB_MB:-1500}"
+      SCANFIT_MIN_FREE_GB: "${SCANFIT_MIN_FREE_GB:-2}"
+    volumes:
+      - ${SCANFIT_DATA_DIR:-./data/server}:/data
+      - ${SCANFIT_CERT_DIR:?run via scripts/run-server}:/certs:ro
+      - ${SCANFIT_TOKEN_FILE:?run via scripts/run-server}:/run/scanfit/token:ro
+    # Bounded local logs (the server writes no access log: no client addresses or job ids).
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+    memswap_limit: 5g  # = memory: no extra swap, so a runaway job stops instead of thrashing the PC
+    deploy:
+      resources:
+        limits:
+          memory: 5g  # WSL has ~8 GB; keep the VM alive if a job misbehaves
+          pids: 1024
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

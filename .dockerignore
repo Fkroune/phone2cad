@@ -1,0 +1,11 @@
+# Allow-list: only what the image needs enters the build context
+# (never .git, .env, data/, keys or local files).
+*
+!requirements.lock
+!LICENSE
+!THIRD_PARTY.md
+!server/app
+!worker/scanfit_worker
+!worker/third_party
+**/__pycache__
+**/*.pyc

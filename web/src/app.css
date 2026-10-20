@@ -1,0 +1,147 @@
+:root {
+	--bg: #f6f5f2;
+	--fg: #1b1b1a;
+	--muted: #6b6a66;
+	--line: #dddbd5;
+	--card: #ffffff;
+	--accent: #1b1b1a;
+	--accent-fg: #ffffff;
+	--good: #1f9d6b;
+	--check: #c98a12;
+	--bad: #c8432b;
+	--radius: 14px;
+	color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #121212;
+		--fg: #f1efea;
+		--muted: #9c9a94;
+		--line: #2c2b29;
+		--card: #1b1b1a;
+		--accent: #f1efea;
+		--accent-fg: #121212;
+	}
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--fg);
+	font:
+		17px/1.45 system-ui,
+		-apple-system,
+		'Segoe UI',
+		Roboto,
+		sans-serif;
+	-webkit-text-size-adjust: 100%;
+}
+
+main {
+	max-width: 34rem;
+	margin: 0 auto;
+	padding: max(1.25rem, env(safe-area-inset-top)) 1.25rem calc(6rem + env(safe-area-inset-bottom));
+}
+
+h1 {
+	font-size: 1.6rem;
+	letter-spacing: -0.02em;
+	margin: 0.5rem 0 1.5rem;
+}
+
+h2 {
+	font-size: 1.05rem;
+	margin: 0 0 0.35rem;
+}
+
+p {
+	margin: 0.25rem 0;
+}
+
+.muted {
+	color: var(--muted);
+}
+
+.card {
+	background: var(--card);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	padding: 1rem 1.1rem;
+	margin-bottom: 0.9rem;
+}
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 3.25rem;
+	padding: 0 1.4rem;
+	border-radius: 999px;
+	border: 0;
+	background: var(--accent);
+	color: var(--accent-fg);
+	font: inherit;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.btn.ghost {
+	background: transparent;
+	color: var(--fg);
+	border: 1px solid var(--line);
+}
+
+.btn:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+.btn.wide {
+	width: 100%;
+}
+
+.dock {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 0.9rem 1.25rem calc(0.9rem + env(safe-area-inset-bottom));
+	background: linear-gradient(transparent, var(--bg) 35%);
+}
+
+.dock > * {
+	max-width: 34rem;
+	margin: 0 auto;
+}
+
+input[type='text'],
+input[type='url'] {
+	width: 100%;
+	font: inherit;
+	padding: 0.7rem 0.8rem;
+	border-radius: 10px;
+	border: 1px solid var(--line);
+	background: var(--bg);
+	color: var(--fg);
+}
+
+.bar {
+	height: 6px;
+	border-radius: 3px;
+	background: var(--line);
+	overflow: hidden;
+}
+
+.bar > i {
+	display: block;
+	height: 100%;
+	background: var(--good);
+	transition: width 0.4s;
+}

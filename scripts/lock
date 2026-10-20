@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Regenerate requirements.lock: the exact, hash-checked Python packages the server
+# image installs. Needs uv (https://docs.astral.sh/uv/). Extra arguments go to
+# `uv pip compile`, e.g. `-c constraints.txt` to keep the versions a release was
+# tested with. Run the server tests and the worker acceptance test afterwards.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+{
+  printf '%s\n' "# Exact, hash-checked Python packages for the server image (Dockerfile:" \
+    "# pip install --require-hashes --only-binary=:all:). The versions are the ones the" \
+    "# release was tested with. Regenerate with scripts/lock after changing" \
+    "# server/requirements.txt or worker/requirements.txt, then run the tests."
+  uv pip compile worker/requirements.txt server/requirements.txt "$@" --generate-hashes \
+    --python-version 3.12 --python-platform x86_64-manylinux_2_39 --only-binary :all: \
+    --no-header --no-annotate -q -o -
+} > requirements.lock.new
+mv requirements.lock.new requirements.lock
+echo "requirements.lock updated"

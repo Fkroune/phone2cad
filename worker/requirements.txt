@@ -1,0 +1,5 @@
+numpy>=2.0
+scipy>=1.13
+opencv-contrib-python-headless>=5.0
+open3d>=0.19
+onnxruntime>=1.20

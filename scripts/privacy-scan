@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""privacy-scan DIR: refuse a web bundle that carries anything personal.
+
+Reads every file as bytes (minified, binary and PDF files too) and fails on:
+source maps, home/WSL/Windows user paths, this user's login, host and git
+identity, private keys and API tokens, Tailscale IPs (100.64.0.0/10),
+machine.tailnet names other than the documented example, this tailnet's name,
+and e-mail addresses that are not in the upstream allow-list below.
+Exit 0 = clean, 1 = something found, 2 = the scan itself failed (fail closed).
+"""
+
+from __future__ import annotations
+
+import getpass
+import json
+import re
+import shutil
+import socket
+import subprocess
+import sys
+from pathlib import Path
+
+# Upstream strings known to be in the bundle (licence headers of dependencies).
+ALLOWED = {b"my-pc.tail1234.ts.net", b"/home/runner/"}  # the example name; OpenCV.js's upstream CI path
+ALLOWED_EMAIL_DOMAINS = (b"example.com", b"example.org", b"opencv.org", b"w3.org")
+
+
+def local_identity() -> list[bytes]:
+    words = {getpass.getuser(), socket.gethostname()}
+    for key in ("user.name", "user.email"):
+        try:
+            v = subprocess.run(["git", "config", "--get", key], capture_output=True, text=True, timeout=10).stdout.strip()
+        except OSError:
+            v = ""
+        if v:
+            words.add(v)
+            if "@" in v:
+                words.add(v.split("@")[0])
+    return [w.encode() for w in words if len(w) >= 4]
+
+
+def tailnet_suffix() -> bytes | None:
+    if not shutil.which("tailscale"):
+        return None
+    p = subprocess.run(["tailscale", "status", "--json"], capture_output=True, text=True, timeout=20)
+    if p.returncode != 0:
+        raise RuntimeError("tailscale is installed but its status could not be read")
+    return json.loads(p.stdout)["MagicDNSSuffix"].encode()
+
+
+def main() -> int:
+    root = Path(sys.argv[1])
+    if not root.is_dir():
+        print(f"privacy-scan: {root} is not a directory", file=sys.stderr)
+        return 2
+    patterns = {
+        "home path": rb"/home/[a-z_][a-z0-9_-]*/",
+        "WSL drive path": rb"/mnt/[a-z]/",
+        "Windows user path": rb"(?i)[a-z]:(\\\\|\\|/)users(\\\\|\\|/)",
+        "private key": rb"BEGIN [A-Z ]*PRIVATE KEY",
+        "API token": rb"CLOUDFLARE_API_TOKEN|ghp_[A-Za-z0-9]{20,}|github_pat_|xox[bp]-",
+        "Tailscale IP": rb"(?<![\d.])100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3}(?![\d.])",
+        "tailnet machine name": rb"[a-z0-9-]+\.tail[0-9a-f]{4,}\.ts\.net",
+        "e-mail address": rb"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}",
+    }
+    literal = {f"local identity ({w.decode()[:2]}…)": re.escape(w) for w in local_identity()}
+    suffix = tailnet_suffix()
+    if suffix:
+        literal["this tailnet's name"] = re.escape(suffix)
+    found = 0
+    for f in sorted(p for p in root.rglob("*") if p.is_file()):
+        rel = f.relative_to(root)
+        if f.suffix == ".map":
+            print(f"source map: {rel}")
+            found += 1
+            continue
+        data = f.read_bytes()
+        for name, pat in {**patterns, **literal}.items():
+            for m in re.finditer(pat, data):
+                hit = m.group(0)
+                if hit in ALLOWED or (name == "e-mail address" and hit.split(b"@")[1].endswith(ALLOWED_EMAIL_DOMAINS)):
+                    continue
+                if name.startswith("local identity") and data[max(0, m.start() - 11):m.start()] == b"github.com/":
+                    continue  # the public GitHub owner in a link to the repository
+                print(f"{name}: {rel} (offset {m.start()})")
+                found += 1
+                break
+    return 1 if found else 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except Exception as e:  # noqa: BLE001 - fail closed
+        print(f"privacy-scan failed: {e}", file=sys.stderr)
+        sys.exit(2)

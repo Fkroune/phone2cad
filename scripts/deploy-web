@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Build the static web app and deploy it to Cloudflare Pages (free plan).
+# Refuses to upload from a tree with uncommitted changes, or a bundle with source
+# maps or anything that looks like local paths, user names, tailnet names or keys
+# (scripts/privacy-scan). Uses the wrangler version pinned in web/package-lock.json,
+# with its usage metrics off. First time: `cd web && npx --no-install wrangler login`.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+[ -f "$ROOT/.env" ] && set -a && . "$ROOT/.env" && set +a
+PROJECT="${SCANFIT_PAGES_PROJECT:-scanfit-app}"
+export WRANGLER_SEND_METRICS=false
+
+if [ -n "$(git -C "$ROOT" status --porcelain --untracked-files=no)" ]; then
+  echo "refusing to deploy: commit or stash your changes first (the deployed app must match a commit)" >&2; exit 1
+fi
+
+cd "$ROOT/web"
+npm ci --ignore-scripts
+npm run build
+
+python3 "$ROOT/scripts/privacy-scan" build || { echo "refusing to deploy: see the privacy scan above" >&2; exit 1; }
+
+wrangler() { npx --no-install wrangler "$@"; }
+# Create the project only when the listing worked and lacks it (a transient API
+# error once made this branch try to re-create an existing project).
+# --force (only in wranglers that have it) keeps classic Pages (a *.pages.dev address
+# with no account name in it); those wranglers otherwise delegate to Workers.
+FORCE=(); wrangler pages project create --help 2>/dev/null | grep -q -- "--force" && FORCE=(--force)
+if LIST="$(wrangler pages project list 2>/dev/null)"; then
+  echo "$LIST" | grep -q "\b$PROJECT\b" \
+    || wrangler pages project create "$PROJECT" --production-branch main "${FORCE[@]}"
+fi
+wrangler pages deploy build --project-name "$PROJECT" --branch main \
+  --commit-hash "$(git -C "$ROOT" rev-parse HEAD)" --commit-message "$(git -C "$ROOT" log -1 --format=%s)"
+echo "Deployed. Put the app address (https://<name>.pages.dev) in .env as SCANFIT_APP_URL"
+echo "(see: cd web && npx --no-install wrangler pages project list), then scripts/run-server."
