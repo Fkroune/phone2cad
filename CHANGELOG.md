@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.2 — maintenance
+
+NOTICE included in the container image; ScanFit icon replaces the framework's default.
+
+- The image carries `NOTICE` next to `LICENSE` and `THIRD_PARTY.md` in
+  `/usr/share/doc/scanfit/`.
+- The phone app has its own icon (a phone showing the test block) instead of
+  the SvelteKit default: browser tab icons at 16 and 32 px and an iOS home-screen
+  icon.
+- The server and the app now report version 1.0.2.
+
 ## v1.0.1 — maintenance
 
 Maintenance: removed unused code and dependencies; no behaviour change.

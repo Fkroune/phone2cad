@@ -1,6 +1,6 @@
 # Builds the ScanFit server image (the server and the worker it starts share one
 # image) and publishes it to the GitHub Container Registry when a version tag
-# such as v1.0.1 is pushed. Users can then set SCANFIT_IMAGE instead of building.
+# such as v1.0.2 is pushed. Users can then set SCANFIT_IMAGE instead of building.
 # Actions are pinned to full commit SHAs (the comment gives the release).
 name: Release image
 
