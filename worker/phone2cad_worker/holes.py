@@ -50,7 +50,7 @@ RIM_SMOOTH_MM = 0.2  # photos smoothed this much before the rim is found (printe
 REG_MIN_PEAK = 0.1  # phase-correlation peak below this: a photo's shift is not trusted
 REG_MAX_MM = 3.0  # nor a shift larger than this
 SYSTEMATIC_MM = 0.15  # rim found slightly inside (synthetic Ø10: 9.78), chamfers: 1-sigma
-DEBUG_DIR = os.environ.get("SCANFIT_HOLES_DEBUG", "")  # developer-only (CONTRIBUTING.md): writes scan photos there
+DEBUG_DIR = os.environ.get("PHONE2CAD_HOLES_DEBUG", "")  # developer-only (CONTRIBUTING.md): writes scan photos there
 
 
 @dataclass
@@ -456,7 +456,7 @@ def find_holes(planes, extents, photos: list[Photo], log=print) -> list[Hole]:
             if img is None:
                 continue
             O = _ortho(img, ph, grid)
-            if DEBUG_DIR:  # SCANFIT_HOLES_DEBUG=folder: save each face orthophoto
+            if DEBUG_DIR:  # PHONE2CAD_HOLES_DEBUG=folder: save each face orthophoto
                 Path(DEBUG_DIR).mkdir(parents=True, exist_ok=True)
                 cv2.imwrite(str(Path(DEBUG_DIR) / f"face{fi:02d}_{ph.path.stem}.png"), np.clip(O, 0, 255).astype(np.uint8))
             stack.append(O)

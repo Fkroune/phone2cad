@@ -5,13 +5,13 @@
 Please do not open a public issue for a security problem. Use GitHub's
 **private vulnerability reporting** for this repository: the Security tab →
 "Report a vulnerability", or
-<https://github.com/Fkroune/scanfit/security/advisories/new>. We aim to answer
+<https://github.com/Fkroune/phone2cad/security/advisories/new>. We aim to answer
 within 7 days.
 
 Please include what is affected, the version, how to reproduce it, and what
 the impact is.
 
-## How ScanFit is meant to be run
+## How Phone2CAD is meant to be run
 
 - The server listens **only** on the PC's Tailscale address, with HTTPS (the
   PC's Tailscale certificate). Running it on a LAN address is not supported. Do
@@ -19,7 +19,7 @@ the impact is.
   and never enable Tailscale Funnel for it.
 - **Pairing code.** Every request except the health check must carry the PC's
   random pairing code, or it is refused. The code is created by `run-server`
-  (`~/.config/scanfit/token`, readable only by you), travels in the QR code's link, and is kept by the paired phone's
+  (`~/.config/phone2cad/token`, readable only by you), travels in the QR code's link, and is kept by the paired phone's
   browser. Treat the link like a password; `scripts/run-server --new-token`
   replaces the code and unpairs every phone.
 - **Pairing never happens silently.** A pairing link opens the app, which shows
@@ -31,7 +31,7 @@ the impact is.
   Tailscale access controls: see
   [getting started](docs/getting-started.md#who-can-reach-the-server).
 - **Browsers:** the server answers only the phone app's origin (CORS,
-  `SCANFIT_WEB_ORIGIN`, checked at start) and Chrome's Private Network Access
+  `PHONE2CAD_WEB_ORIGIN`, checked at start) and Chrome's Private Network Access
   preflight for it; any request that would change something and comes from
   another site is refused.
 - **Uploads are checked:** a well-formed JPEG only, at most 15 MB and 64
@@ -58,7 +58,7 @@ the impact is.
 
 ## Known limitations
 
-ScanFit is experimental software. These are the limits we know of, with what
+Phone2CAD is experimental software. These are the limits we know of, with what
 you can do about them. Fixes we plan are in the
 [roadmap](docs/dev/roadmap.md#security-hardening).
 
@@ -68,7 +68,7 @@ you can do about them. Fixes we plan are in the
   user for the worker. Meanwhile: keep the server image up to date, scan only
   your own photos, and use `scripts/run-server --new-token` if you ever
   suspect the pairing code was exposed.
-- **The container is not blocked from the network.** ScanFit needs no internet
+- **The container is not blocked from the network.** Phone2CAD needs no internet
   access while it runs and none was observed in testing, but the container is
   not prevented from having it. Planned: block outgoing traffic. Meanwhile, you
   can block it yourself with a firewall rule on the PC.
@@ -81,7 +81,7 @@ you can do about them. Fixes we plan are in the
 - **Who can connect depends on your tailnet.** Restrict port 8443 with
   Tailscale access controls if others share it.
 - **Base image libraries.** The pinned base image and the OpenCV wheel contain
-  libraries with published advisories in parts ScanFit does not use (for
+  libraries with published advisories in parts Phone2CAD does not use (for
   example video codecs). They are updated with new base images; the release
   notes say when.
 

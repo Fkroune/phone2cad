@@ -1,5 +1,5 @@
 /*
- * ScanFit live vision core (runs inside cv-worker.js, also loadable in Node
+ * Phone2CAD live vision core (runs inside cv-worker.js, also loadable in Node
  * for tests). Detects the mat's ArUco markers in a small preview frame,
  * estimates the camera position in mat millimetres, and scores sharpness.
  * No DOM, no network.
@@ -110,5 +110,5 @@
 		}
 	}
 
-	root.ScanfitCV = { init, analyse };
+	root.Phone2cadCV = { init, analyse };
 })(typeof self !== 'undefined' ? self : globalThis);

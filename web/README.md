@@ -1,6 +1,6 @@
-# ScanFit phone app
+# Phone2CAD phone app
 
-The part of ScanFit that runs in the phone's browser: capture, upload, live
+The part of Phone2CAD that runs in the phone's browser: capture, upload, live
 progress and the result viewer. It is a static SvelteKit site (TypeScript); it
 needs no server of its own.
 
@@ -9,7 +9,7 @@ needs no server of its own.
 - **Capture** (`src/routes/scan`): camera, marker detection in a web worker
   (OpenCV.js, `static/cv/`), choice of useful frames (`src/lib/keyframes.ts`),
   motion sensors (`src/lib/motion.ts`), coverage dome (`src/lib/Dome.svelte`).
-- **Upload** to the ScanFit server on your PC (`src/lib/api.ts`). The server's
+- **Upload** to the Phone2CAD server on your PC (`src/lib/api.ts`). The server's
   address and its pairing code come from the link `#server=https://...&token=...`
   that `run-server` prints (the fragment is never sent to the site's host). The
   app shows the PC's name and stores both in the browser's storage only when the
@@ -37,6 +37,6 @@ publishes it to Cloudflare Pages with the wrangler version pinned in
 `package-lock.json`. It refuses to upload uncommitted code, or a build that
 contains source maps, local paths, user or machine names, tailnet addresses,
 e-mail addresses or keys (`../scripts/privacy-scan`). Then set
-`SCANFIT_APP_URL` in the PC's `.env` to the site's address.
+`PHONE2CAD_APP_URL` in the PC's `.env` to the site's address.
 
 Security headers for the host are in `static/_headers`.

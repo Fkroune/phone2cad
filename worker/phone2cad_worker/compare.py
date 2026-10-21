@@ -1,6 +1,6 @@
 """Score a scan against the part's CAD model.
 
-    python -m scanfit_worker.compare SCAN.ply MODEL.stl [--save aligned.ply]
+    python -m phone2cad_worker.compare SCAN.ply MODEL.stl [--save aligned.ply]
 
 SCAN is a job's result/mesh.ply (or any point cloud of the part alone, in mm).
 The scan is aligned to the model by shape alone (feature matching, then ICP;

@@ -1,12 +1,12 @@
 """Run the full pipeline on a benchmark capture and score it against the CAD.
 
-    python -m scanfit_worker.benchmark [--dataset ../data/benchmark/corner-v1]
+    python -m phone2cad_worker.benchmark [--dataset ../data/benchmark/corner-v1]
                                        [--dense auto|cuda|cpu] [--keep-work] [--note TEXT]
 
 A benchmark folder holds frames/ (a real phone capture) and reference.stl.
 Each run copies the frames into data/benchmark/runs/<time>/ (the pipeline
 deletes its input), runs the same code the server runs, scores the mesh with
-scanfit_worker.compare, writes score.json there and appends a row to
+phone2cad_worker.compare, writes score.json there and appends a row to
 data/benchmark/results.csv so changes can be compared over time.
 """
 
@@ -54,7 +54,7 @@ def score_run(job: Path, dataset: Path, report: dict, minutes: float, note: str 
     within = [f["within_pm"] for f in feats if f["within_pm"] is not None]
     row = {
         "time": time.strftime("%Y-%m-%d %H:%M"), "dataset": dataset.name, "note": note,  # noqa: E501
-        "sfm_mode": os.environ.get("SCANFIT_SFM_MODE", "accurate"), "dense_path": report["dense"]["path"],
+        "sfm_mode": os.environ.get("PHONE2CAD_SFM_MODE", "accurate"), "dense_path": report["dense"]["path"],
         "minutes": round(minutes, 1), "frames_used": report["frames"]["used"],
         "frames_on_mat": report["frames"].get("located_by_mat", 0),
         "coverage_1mm": round(sc.coverage[1.0], 3), "coverage_05mm": round(sc.coverage[0.5], 3),

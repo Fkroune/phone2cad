@@ -1,6 +1,6 @@
 """Run one scan job end to end.
 
-    python -m scanfit_worker.pipeline JOB_DIR [--dense auto|cuda|cpu] [--keep]
+    python -m phone2cad_worker.pipeline JOB_DIR [--dense auto|cuda|cpu] [--keep]
 
 JOB_DIR/frames/*.jpg are the uploaded frames. Results go to JOB_DIR/result/
 (mesh.ply, features.json); progress to JOB_DIR/progress.json. Frames and
@@ -71,7 +71,7 @@ class LazyFrames:
 
 
 def gpu_available() -> bool:
-    if os.environ.get("SCANFIT_GPU", "auto") == "0":
+    if os.environ.get("PHONE2CAD_GPU", "auto") == "0":
         return False
     if shutil.which("nvidia-smi"):
         try:
@@ -84,7 +84,7 @@ def gpu_available() -> bool:
 # 0.4 mm). CUDA: real benchmark corner-v1 (2026-10-08): 9.6 mm arm widths up to
 # 0.3-0.46 mm thin, other dimensions within 0.1 mm; 0.08 claimed too much.
 SYSTEMATIC_MM = {"cuda": 0.15, "cpu": 0.15}
-DENSE_MAX_FRAMES = int(os.environ.get("SCANFIT_DENSE_MAX_FRAMES", "32"))
+DENSE_MAX_FRAMES = int(os.environ.get("PHONE2CAD_DENSE_MAX_FRAMES", "32"))
 
 
 class Progress:
@@ -331,7 +331,7 @@ def _locate(side: Side, cm, ws: Path, progress, preview, log, f, prefix: str) ->
                       C[keep] if C is not None else None,
                       np.array([-m.poses[n][0].T @ m.poses[n][1] for n in located]), _kinds(located, on_mat))
     model = None
-    if os.environ.get("SCANFIT_SFM_MODE", "register") == "register":
+    if os.environ.get("PHONE2CAD_SFM_MODE", "register") == "register":
         try:  # triangulate from the mat-located frames, register the close-ups
             model = colmap_session.sfm_register(cm, ws, side.frames_dir, cal, cal.same_size, on_progress=on_progress,
                                                 on_model=on_model)
@@ -380,7 +380,7 @@ def _solve_side(side: Side, cm, work: Path, dense: str, use_gpu: bool, progress,
     ws.mkdir(parents=True, exist_ok=True)
     state = ws / "state.pkl"
     # Developer-only (CONTRIBUTING.md): unpickles a file this worker wrote itself; never set in the server.
-    if os.environ.get("SCANFIT_RESUME") == "1" and state.exists():  # skip the camera solve
+    if os.environ.get("PHONE2CAD_RESUME") == "1" and state.exists():  # skip the camera solve
         side.cal, side.model, side.used, side.stats, side.on_mat = pickle.loads(state.read_bytes())[:5]
         log(f"resumed {side.tag} from {state}")
     else:
@@ -419,7 +419,7 @@ def _solve_side(side: Side, cm, work: Path, dense: str, use_gpu: bool, progress,
         part_px = colmap_session.part_region_px(cal, side.views, side.box) * cm.dense_image_size / max(cal.width, cal.height)
         try:
             reuse = [p for p in (ws / "dense" / "fused.ply", ws / "dense_crop" / "dense" / "fused.ply") if p.exists()]
-            if os.environ.get("SCANFIT_RESUME") == "1" and reuse:
+            if os.environ.get("PHONE2CAD_RESUME") == "1" and reuse:
                 fused = reuse[0]
             elif part_px < colmap_session.CROP_BELOW_PX:
                 fused = colmap_session.dense_crop(cm, ws, side.frames_dir, cal, side.views, side.box, side.model,
@@ -609,7 +609,7 @@ def _check_coverage(side: Side, progress, prefix) -> None:
 
 
 SEG_SEED_VIEWS = 10  # overview frames that find the part
-SEG_VIEWS = int(os.environ.get("SCANFIT_SEG_VIEWS", "64"))  # frames outlined for carving (SAM: ~5 s each on CPU)
+SEG_VIEWS = int(os.environ.get("PHONE2CAD_SEG_VIEWS", "64"))  # frames outlined for carving (SAM: ~5 s each on CPU)
 
 
 def _mat_points(box, step: float = 8.0) -> np.ndarray:
@@ -962,7 +962,7 @@ def run(job: Path, dense: str = "auto", max_image_size: int = 1600, keep: bool =
     frames_dir, work, result = job / "frames", job / "work", job / "result"
     result.mkdir(parents=True, exist_ok=True)
     progress = Progress(job, log)
-    report: dict = {"schema": "scanfit.result.v1"}
+    report: dict = {"schema": "phone2cad.result.v1"}
     failed = False
     heartbeat = None
     try:
@@ -1127,10 +1127,10 @@ def run(job: Path, dense: str = "auto", max_image_size: int = 1600, keep: bool =
     finally:
         if heartbeat:
             heartbeat.stop()
-        # SCANFIT_KEEP_FRAMES=failed|all (opt-in, local debugging): the server
+        # PHONE2CAD_KEEP_FRAMES=failed|all (opt-in, local debugging): the server
         # moves the frames to data/server/debug/ instead of deleting them.
         if not keep:
-            kf = os.environ.get("SCANFIT_KEEP_FRAMES") or ("failed" if os.environ.get("SCANFIT_KEEP_FAILED") == "1" else "")
+            kf = os.environ.get("PHONE2CAD_KEEP_FRAMES") or ("failed" if os.environ.get("PHONE2CAD_KEEP_FAILED") == "1" else "")
             if not (kf == "all" or (kf == "failed" and failed)):
                 shutil.rmtree(frames_dir, ignore_errors=True)
             if kf != "all":  # "all" also keeps COLMAP's work for later analysis
@@ -1153,8 +1153,8 @@ def _zone() -> tuple[float, float, float, float]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("job", type=Path)
-    ap.add_argument("--dense", choices=["auto", "cuda", "cpu"], default=os.environ.get("SCANFIT_DENSE", "auto"))
-    ap.add_argument("--max-image-size", type=int, default=int(os.environ.get("SCANFIT_MAX_IMAGE_SIZE", "1600")))
+    ap.add_argument("--dense", choices=["auto", "cuda", "cpu"], default=os.environ.get("PHONE2CAD_DENSE", "auto"))
+    ap.add_argument("--max-image-size", type=int, default=int(os.environ.get("PHONE2CAD_MAX_IMAGE_SIZE", "1600")))
     ap.add_argument("--keep", action="store_true", help="keep frames and work dir (debug only)")
     a = ap.parse_args()
     run(a.job, a.dense, a.max_image_size, a.keep)

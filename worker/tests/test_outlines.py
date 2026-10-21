@@ -5,8 +5,8 @@ from types import SimpleNamespace
 import cv2
 import numpy as np
 
-from scanfit_worker import pipeline
-from scanfit_worker.silhouette import ViewMask
+from phone2cad_worker import pipeline
+from phone2cad_worker.silhouette import ViewMask
 
 SIZE, F = 400, 500.0  # px, focal length (px)
 

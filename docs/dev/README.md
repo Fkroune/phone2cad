@@ -1,6 +1,6 @@
 # Docs for contributors
 
-Background for working on ScanFit. To use it, start with the
+Background for working on Phone2CAD. To use it, start with the
 [main README](../../README.md) and [getting started](../getting-started.md).
 
 - [How it works](how-it-works.md): the seven steps from phone video to

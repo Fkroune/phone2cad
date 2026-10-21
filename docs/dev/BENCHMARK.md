@@ -1,4 +1,4 @@
-# ScanFit benchmark and comparison with other scanning tools
+# Phone2CAD benchmark and comparison with other scanning tools
 
 ## 1. Benchmark dataset
 
@@ -8,8 +8,8 @@ on the A4 mat, filmed unguided: mostly close-ups, the mat often cut off, the pap
 1-4 mm at its edges. Ground truth: the part's CAD (`reference.stl`, 39.5 x 39.5 x 36.8 mm).
 It is the realistic case the app must handle, so every pipeline change is scored on it.
 
-Run it: `cd worker && python -m scanfit_worker.benchmark --note "what changed"`.
-Each run appends a row to a local results file (see `worker/scanfit_worker/benchmark.py`). Metrics:
+Run it: `cd worker && python -m phone2cad_worker.benchmark --note "what changed"`.
+Each run appends a row to a local results file (see `worker/phone2cad_worker/benchmark.py`). Metrics:
 
 - **coverage**: share of the CAD surface that has scan points within 1 mm / 0.5 mm;
 - **median distance**: scan points to the true surface;
@@ -61,7 +61,7 @@ Matching research: learned features and matchers (SuperPoint / ALIKED + LightGlu
 SIFT + LightGlue) find more and more reliable matches than plain SIFT on low-texture and
 difficult scenes, at the cost of a GPU network per image pair.
 
-## 3. What fits ScanFit (a phone, a printed mat, a PC with an entry-level NVIDIA GPU (2 GB), no cloud, no paid services)
+## 3. What fits Phone2CAD (a phone, a printed mat, a PC with an entry-level NVIDIA GPU (2 GB), no cloud, no paid services)
 
 Ranked by expected gain on our benchmark for the effort:
 

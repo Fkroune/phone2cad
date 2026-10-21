@@ -1,6 +1,6 @@
-# Builds the ScanFit server image (the server and the worker it starts share one
+# Builds the Phone2CAD server image (the server and the worker it starts share one
 # image) and publishes it to the GitHub Container Registry when a version tag
-# such as v1.0.3 is pushed. Users can then set SCANFIT_IMAGE instead of building.
+# such as v1.0.3 is pushed. Users can then set PHONE2CAD_IMAGE instead of building.
 # Actions are pinned to full commit SHAs (the comment gives the release).
 name: Release image
 
@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 120
     permissions:
       contents: read # check out the tagged source
-      packages: write # push ghcr.io/<owner>/scanfit
+      packages: write # push ghcr.io/<owner>/phone2cad
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
@@ -38,7 +38,7 @@ jobs:
       - id: meta
         uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
         with:
-          images: ghcr.io/${{ github.repository_owner }}/scanfit
+          images: ghcr.io/${{ github.repository_owner }}/phone2cad
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}

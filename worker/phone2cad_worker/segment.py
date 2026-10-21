@@ -25,12 +25,12 @@ import numpy as np
 from .calib import Calibration
 from .silhouette import ViewMask
 
-MODEL_DIRS = [os.environ.get("SCANFIT_SAM_DIR", ""), "/models/sam21_tiny",
-              str(Path.home() / ".cache" / "scanfit" / "models" / "sam21_tiny")]
+MODEL_DIRS = [os.environ.get("PHONE2CAD_SAM_DIR", ""), "/models/sam21_tiny",
+              str(Path.home() / ".cache" / "phone2cad" / "models" / "sam21_tiny")]
 MASK_SIDE = 2000  # px, longest side of the undistorted frames the masks are made on
 CROP_MARGIN = 0.35  # crop around the projected box, as a share of its size
-BG_LOGIT = float(os.environ.get("SCANFIT_SAM_BG_LOGIT", "-2.0"))  # surely not the part below this (0 = 50 %; sweep 2026-10-13)
-EDGE_PX = int(os.environ.get("SCANFIT_SAM_EDGE_PX", "1"))  # pixels next to the outline stay unknown
+BG_LOGIT = float(os.environ.get("PHONE2CAD_SAM_BG_LOGIT", "-2.0"))  # surely not the part below this (0 = 50 %; sweep 2026-10-13)
+EDGE_PX = int(os.environ.get("PHONE2CAD_SAM_EDGE_PX", "1"))  # pixels next to the outline stay unknown
 CORE_INSIDE = 0.8  # share of the part's projected 3D points an outline must hold
 MEAN, STD = np.array([0.485, 0.456, 0.406]), np.array([0.229, 0.224, 0.225])
 

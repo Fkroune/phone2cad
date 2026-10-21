@@ -1,7 +1,7 @@
 # Privacy
 
-ScanFit is built so that your photos go only to **your own PC**. Nobody else,
-including the ScanFit project, receives your photos, your results or your PC's
+Phone2CAD is built so that your photos go only to **your own PC**. Nobody else,
+including the Phone2CAD project, receives your photos, your results or your PC's
 address.
 
 ## Where your data goes
@@ -19,7 +19,7 @@ address.
 - **Results** stay on your PC: the 3D copy (`mesh.ply`), the measurements
   (`features.json`), and one small **cropped photo of the part** with the 3D
   copy's outline drawn on it (`check.jpg`, the "Does this match your part?"
-  picture). They are deleted after 24 hours (`SCANFIT_RESULT_TTL_H`), or at
+  picture). They are deleted after 24 hours (`PHONE2CAD_RESULT_TTL_H`), or at
   once when you tap **Remove it now** on the result page.
 - A **job record** (a random id, the status, the number of frames, times, and
   the error message of a failed scan) is kept for 7 days, then deleted.
@@ -35,7 +35,7 @@ address.
 
 | Service | When | What it receives |
 |---|---|---|
-| **Cloudflare Pages** (hosts the public phone app, scanfit-app.pages.dev) | When the phone loads the app | Your IP address, browser type, the pages and files requested, and when. Not your PC's address, pairing code, photos or results. ScanFit adds no analytics or cookies. See [Cloudflare's privacy policy](https://www.cloudflare.com/privacypolicy/). |
+| **Cloudflare Pages** (hosts the public phone app, phone2cad-app.pages.dev) | When the phone loads the app | Your IP address, browser type, the pages and files requested, and when. Not your PC's address, pairing code, photos or results. Phone2CAD adds no analytics or cookies. See [Cloudflare's privacy policy](https://www.cloudflare.com/privacypolicy/). |
 | **Tailscale** (the private network) | While Tailscale runs on your phone and PC | Your Tailscale account and device information (names, addresses, operating system). Your traffic is end-to-end encrypted: Tailscale cannot read your photos, even when it relays them. See [Tailscale's privacy policy](https://tailscale.com/privacy-policy). |
 | **Public Certificate Transparency logs** | When `run-server` gets the PC's HTTPS certificate | The PC's name and your tailnet's name (such as `my-pc.tail1234.ts.net`) are published permanently, as for every HTTPS certificate. Choose a neutral PC name: see [getting started](docs/getting-started.md). |
 | **GitHub, Docker Hub, PyPI, Hugging Face** | Only when you build or download the server image | Your IP address and what is downloaded (the code, the COLMAP base image, Python packages, the SAM 2.1 model). Never anything about your scans. |
@@ -44,12 +44,12 @@ When the server runs, it contacts nothing on the internet: in tests of start,
 a full synthetic scan, a failed scan and shutdown, it sent no network traffic
 at all.
 
-Running ScanFit's server is your own processing on your own PC: you are
+Running Phone2CAD's server is your own processing on your own PC: you are
 responsible for it and for securing that PC (see the
 [disclaimer](README.md#disclaimer-experimental-software-use-at-your-own-risk)).
-For the public phone app, the ScanFit maintainer is responsible for its
+For the public phone app, the Phone2CAD maintainer is responsible for its
 hosting; questions about it go through the
-[GitHub repository](https://github.com/Fkroune/scanfit) (for anything private,
+[GitHub repository](https://github.com/Fkroune/phone2cad) (for anything private,
 use its private vulnerability reporting). The maintainer has no access to your
 scans, results, PC address or pairing code, so there is nothing about them to
 show, correct or delete. Data held by Cloudflare or Tailscale is governed by
@@ -57,10 +57,10 @@ their policies above.
 
 ## No tracking
 
-- No ScanFit account, no analytics, no ads, no tracking cookies. (Tailscale
+- No Phone2CAD account, no analytics, no ads, no tracking cookies. (Tailscale
   needs its own free account.)
 - **ONNX Runtime**, used to run the outline model, sends usage telemetry to
-  Microsoft by default. ScanFit **switches this off**
+  Microsoft by default. Phone2CAD **switches this off**
   (`ORT_DISABLE_TELEMETRY=1`, plus `disable_telemetry_events()`).
 - The outline model is downloaded once, when the server image is built, from a
   fixed version checked against its checksum. Nothing is downloaded while the
@@ -73,10 +73,10 @@ one scan: tick **Keep this scan's photos on my PC for 24 hours** next to the
 scan button, on the home page or the result page. It is off by default, applies
 to the next scan only, and the photos (with COLMAP's working files) are kept in
 `data/server/debug/` on your PC until the result expires (24 hours,
-`SCANFIT_RESULT_TTL_H`) or you tap **Remove it now**, whichever comes first.
+`PHONE2CAD_RESULT_TTL_H`) or you tap **Remove it now**, whichever comes first.
 The photos may show your room: never attach them to a public issue.
 
-For development, `SCANFIT_KEEP_FRAMES=failed` or `all` does the same for every
+For development, `PHONE2CAD_KEEP_FRAMES=failed` or `all` does the same for every
 scan (or every failed one) on that server. It is off by default, and
 `run-server` warns while it is on.
 

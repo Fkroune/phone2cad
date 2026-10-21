@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>ScanFit</title>
+	<title>Phone2CAD</title>
 </svelte:head>
 
 {@render children()}

@@ -10,13 +10,13 @@ for your Ubuntu. On Linux, add yourself to the `docker` group, then log out and
 back in.
 
 **My NVIDIA card is found, but Docker cannot use it.**
-Install the NVIDIA Container Toolkit and restart Docker. Until then, ScanFit
+Install the NVIDIA Container Toolkit and restart Docker. Until then, Phone2CAD
 uses the slower CPU path.
 
-**`run-server` stops with "set SCANFIT_APP_URL".**
+**`run-server` stops with "set PHONE2CAD_APP_URL".**
 The script has lost its built-in app address (it was edited). Get a fresh copy with
 `git checkout scripts/run-server`, or put the app's address in `.env`:
-`SCANFIT_APP_URL=https://scanfit-app.pages.dev` (or your own copy's address).
+`PHONE2CAD_APP_URL=https://phone2cad-app.pages.dev` (or your own copy's address).
 
 **`run-server` cannot get a certificate.**
 In the Tailscale admin page, turn on MagicDNS and HTTPS certificates. Then run
@@ -28,7 +28,7 @@ the app on the phone.
 
 **`run-server` says it must not run as root, or that a folder is on a Windows drive.**
 Run it as your normal user. Keep the certificates and the pairing code under
-your Linux home (the defaults); set `SCANFIT_DATA_DIR` in `.env` to a folder
+your Linux home (the defaults); set `PHONE2CAD_DATA_DIR` in `.env` to a folder
 under your Linux home if the warning is about the scans folder.
 
 **WSL2 freezes or the terminal closes during a scan.**
@@ -39,7 +39,7 @@ WSL2 ran out of memory. Give it at least 8 GB in `%UserProfile%\.wslconfig`
 
 **The phone cannot reach the server.**
 - Is the phone signed in to Tailscale, with the same account as the PC?
-- Is the server running (`docker ps` shows `scanfit`)?
+- Is the server running (`docker ps` shows `phone2cad`)?
 - Open `https://<your-pc>.<your-tailnet>.ts.net:8443/api/health` in the phone's
   browser: it should show `"ok": true`. (`"ok": false` means the server's
   worker stopped: restart it with `scripts/run-server`.)
@@ -64,7 +64,7 @@ above.
 ## Results
 
 **A measurement is clearly wrong.**
-- Check that the mat scale is set (`SCANFIT_MAT_10_SQUARES_MM`).
+- Check that the mat scale is set (`PHONE2CAD_MAT_10_SQUARES_MM`).
 - Use a normal two-sided scan, not a quick scan.
 - Sizes may read up to ~1.5 % large (see [accuracy](accuracy.md)): check
   critical sizes with a caliper.

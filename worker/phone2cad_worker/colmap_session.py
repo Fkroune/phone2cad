@@ -1,11 +1,11 @@
-"""COLMAP stages for one ScanFit job.
+"""COLMAP stages for one Phone2CAD job.
 
 Adapted from Orbiter's ``colmap/run_colmap_session.sh``
 (https://github.com/RawMechatronicsOrg/Orbiter, commit af137c8,
 Copyright (c) 2026 Orbiter contributors, Apache License 2.0; see
 ``worker/third_party/orbiter_colmap/``).
 
-Changes made for ScanFit:
+Changes made for Phone2CAD:
 * Ported from bash to Python; the step()/[PROFILE] logging is kept.
 * Priors come from the ChArUco mat (lens model and metric poses), written in
   Orbiter's ``orbiter.sfm_priors.v1`` schema and converted by the unmodified
@@ -44,7 +44,7 @@ from .calib import Calibration, quat_to_rotmat, rotmat_to_quat
 PRIORS_SCRIPT = Path(__file__).resolve().parents[1] / "third_party" / "orbiter_colmap" / "sfm_priors_to_colmap.py"
 # The same COLMAP build as the server image's base (pinned by digest, see Dockerfile).
 COLMAP_IMAGE = os.environ.get(
-    "SCANFIT_COLMAP_IMAGE", "colmap/colmap@sha256:c1de51615dff33066cd305071226b6343c1168324ef3bd622f0825e55feb5efe")
+    "PHONE2CAD_COLMAP_IMAGE", "colmap/colmap@sha256:c1de51615dff33066cd305071226b6343c1168324ef3bd622f0825e55feb5efe")
 
 
 class ColmapError(RuntimeError):
@@ -58,7 +58,7 @@ class DenseUnavailable(ColmapError):
 _GPU_CACHE: dict[str, bool] = {}
 
 
-CPU_SIFT_THREADS = max(1, int(os.environ.get("SCANFIT_CPU_SIFT_THREADS", "3")))
+CPU_SIFT_THREADS = max(1, int(os.environ.get("PHONE2CAD_CPU_SIFT_THREADS", "3")))
 
 
 def _docker_has_gpu() -> bool:
@@ -145,12 +145,12 @@ class Colmap:
     # PatchMatch cost grows with pixels x source images; on an entry-level 2 GB GPU the
     # full 1600 px / 12 sources ran ~2 h per job. 1000 px / 6 sources / 3
     # iterations keeps it in the 10-20 min range.
-    dense_image_size: int = int(os.environ.get("SCANFIT_DENSE_IMAGE_SIZE", "1000"))
-    dense_timeout: float = float(os.environ.get("SCANFIT_DENSE_TIMEOUT_S", "2400"))
+    dense_image_size: int = int(os.environ.get("PHONE2CAD_DENSE_IMAGE_SIZE", "1000"))
+    dense_timeout: float = float(os.environ.get("PHONE2CAD_DENSE_TIMEOUT_S", "2400"))
 
     def __post_init__(self):
         self.root = Path(self.root).resolve()
-        override = os.environ.get("SCANFIT_COLMAP")
+        override = os.environ.get("PHONE2CAD_COLMAP")
         if override:
             self.base = override.split()
         elif shutil.which("colmap"):
@@ -168,7 +168,7 @@ class Colmap:
 
     @staticmethod
     def available() -> bool:
-        return bool(os.environ.get("SCANFIT_COLMAP") or shutil.which("colmap") or shutil.which("docker"))
+        return bool(os.environ.get("PHONE2CAD_COLMAP") or shutil.which("colmap") or shutil.which("docker"))
 
     def step(self, title: str, sub: str, *args: str, check: bool = True,
              timeout: float = 3600, tick=None) -> subprocess.CompletedProcess:
@@ -180,7 +180,7 @@ class Colmap:
         name = None
         if base[:2] == ["docker", "run"]:
             # Named so a timeout can stop the container, not just the docker client.
-            name = f"scanfit-colmap-{os.getpid()}-{int(s * 1000)}"
+            name = f"phone2cad-colmap-{os.getpid()}-{int(s * 1000)}"
             base[2:2] = ["--name", name]
         cmd = [*base, sub, "--log_target", "stderr", *map(str, args), *_seeds(sub)]
         try:
@@ -347,7 +347,7 @@ def sfm_all(cm: Colmap, ws: Path, image_dir: Path, cal: Calibration, names: list
     features. "fast": capture-order matching + global mapping, ~5x quicker.
     Measured on a real scan vs CAD: worst dimension error 0.19 vs 0.29 mm.
     """
-    mode = mode or os.environ.get("SCANFIT_SFM_MODE", "accurate")
+    mode = mode or os.environ.get("PHONE2CAD_SFM_MODE", "accurate")
     accurate = mode != "fast" and len(names) <= EXHAUSTIVE_MAX and cm.use_gpu  # all-pairs on CPU: hours
     ws.mkdir(parents=True, exist_ok=True)
     db, priors = ws / "database.db", ws / "sfm_priors.json"
@@ -564,7 +564,7 @@ def _report_depth_maps(dd: Path, on_progress) -> None:
 # ---- dense on full-resolution crops of the part -------------------------------------
 
 
-DENSE_CROP_MAX = int(os.environ.get("SCANFIT_DENSE_CROP_MAX", "1000"))  # px, longest crop side fed to PatchMatch
+DENSE_CROP_MAX = int(os.environ.get("PHONE2CAD_DENSE_CROP_MAX", "1000"))  # px, longest crop side fed to PatchMatch
 
 
 CROP_BELOW_PX = 400  # crop only when the part would be smaller than this in whole-frame dense images

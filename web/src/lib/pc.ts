@@ -1,12 +1,12 @@
-// Where the user's PC (the ScanFit server) lives, and the pairing token it
+// Where the user's PC (the Phone2CAD server) lives, and the pairing token it
 // asks for. Never baked into the bundle: both arrive in the URL fragment of
 // the link printed by `run-server` (fragments are not sent to Cloudflare) and
 // are kept in this browser only. A link never re-points the phone silently:
 // the home page shows the PC's name and stores it only when the user agrees.
 
-const KEY = 'scanfit.server';
-const TOKEN_KEY = 'scanfit.token';
-const JOB_KEY = 'scanfit.lastJob';
+const KEY = 'phone2cad.server';
+const TOKEN_KEY = 'phone2cad.token';
+const JOB_KEY = 'phone2cad.lastJob';
 const DEFAULT_PORT = '8443';
 const TOKEN = /^[A-Za-z0-9_-]{32,128}$/;
 
@@ -135,7 +135,7 @@ export function forgetJob(id: string): void {
 // scan and off by default: it lasts for this browser tab only and is cleared as
 // soon as a scan starts, so the default privacy promise (photos deleted when the
 // job ends) holds unless the user asks otherwise, every time.
-const KEEP_KEY = 'scanfit.keepPhotos';
+const KEEP_KEY = 'phone2cad.keepPhotos';
 
 export function getKeepPhotos(): boolean {
 	try {

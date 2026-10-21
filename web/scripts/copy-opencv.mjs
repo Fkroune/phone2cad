@@ -16,5 +16,5 @@ const notices = [
 ].map(([what, file]) => `${what}\n${'-'.repeat(what.length)}\n\n${readFileSync(mod(file), 'utf8').trim()}\n`);
 writeFileSync(
 	resolve(root, 'static/third-party-licenses.txt'),
-	`Third-party software in the ScanFit phone app\n\n${notices.join('\n\n')}`
+	`Third-party software in the Phone2CAD phone app\n\n${notices.join('\n\n')}`
 );

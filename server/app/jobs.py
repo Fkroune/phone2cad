@@ -23,30 +23,30 @@ import threading
 import time
 from pathlib import Path
 
-log = logging.getLogger("scanfit")
+log = logging.getLogger("phone2cad")
 
-DATA = Path(os.environ.get("SCANFIT_DATA", Path(__file__).resolve().parents[2] / "data")).resolve()
+DATA = Path(os.environ.get("PHONE2CAD_DATA", Path(__file__).resolve().parents[2] / "data")).resolve()
 JOBS = DATA / "jobs"
-MAX_FRAMES = int(os.environ.get("SCANFIT_MAX_FRAMES", "150"))
+MAX_FRAMES = int(os.environ.get("PHONE2CAD_MAX_FRAMES", "150"))
 MIN_FRAMES = 8
-MAX_FRAME_BYTES = int(float(os.environ.get("SCANFIT_MAX_FRAME_MB", "15")) * 1024 * 1024)
-MAX_FRAME_PIXELS = int(float(os.environ.get("SCANFIT_MAX_FRAME_MP", "64")) * 1_000_000)
+MAX_FRAME_BYTES = int(float(os.environ.get("PHONE2CAD_MAX_FRAME_MB", "15")) * 1024 * 1024)
+MAX_FRAME_PIXELS = int(float(os.environ.get("PHONE2CAD_MAX_FRAME_MP", "64")) * 1_000_000)
 MAX_FRAME_SIDE = 12_000
-MAX_JOB_BYTES = int(float(os.environ.get("SCANFIT_MAX_JOB_MB", "1500")) * 1024 * 1024)
-MAX_QUEUE = int(os.environ.get("SCANFIT_MAX_QUEUE", "5"))  # queued + running
-MAX_OPEN = int(os.environ.get("SCANFIT_MAX_OPEN", "8"))  # uploading + queued + running
-MIN_FREE_BYTES = int(float(os.environ.get("SCANFIT_MIN_FREE_GB", "2")) * 1024 ** 3)
+MAX_JOB_BYTES = int(float(os.environ.get("PHONE2CAD_MAX_JOB_MB", "1500")) * 1024 * 1024)
+MAX_QUEUE = int(os.environ.get("PHONE2CAD_MAX_QUEUE", "5"))  # queued + running
+MAX_OPEN = int(os.environ.get("PHONE2CAD_MAX_OPEN", "8"))  # uploading + queued + running
+MIN_FREE_BYTES = int(float(os.environ.get("PHONE2CAD_MIN_FREE_GB", "2")) * 1024 ** 3)
 UPLOAD_TTL = 3600  # an upload that stops for 1 h is dropped
-RESULT_TTL = int(os.environ.get("SCANFIT_RESULT_TTL_H", "24")) * 3600
+RESULT_TTL = int(os.environ.get("PHONE2CAD_RESULT_TTL_H", "24")) * 3600
 RECORD_TTL = 7 * 24 * 3600
 JOB_TIMEOUT = 4 * 3600
 SWEEP_EVERY = 600
-WORKER_DIR = Path(os.environ.get("SCANFIT_WORKER_DIR", Path(__file__).resolve().parents[2] / "worker"))
-WORKER_CMD = shlex.split(os.environ.get("SCANFIT_WORKER_CMD", f"{shlex.quote(sys.executable)} -m scanfit_worker.pipeline"))
+WORKER_DIR = Path(os.environ.get("PHONE2CAD_WORKER_DIR", Path(__file__).resolve().parents[2] / "worker"))
+WORKER_CMD = shlex.split(os.environ.get("PHONE2CAD_WORKER_CMD", f"{shlex.quote(sys.executable)} -m phone2cad_worker.pipeline"))
 
 # Debugging only, off by default (see .env.example): keep a job's frames on this PC
 # in data/server/debug/ instead of deleting them. "failed" or "all".
-KEEP_FRAMES = os.environ.get("SCANFIT_KEEP_FRAMES") or ("failed" if os.environ.get("SCANFIT_KEEP_FAILED") == "1" else "")
+KEEP_FRAMES = os.environ.get("PHONE2CAD_KEEP_FRAMES") or ("failed" if os.environ.get("PHONE2CAD_KEEP_FAILED") == "1" else "")
 
 JOB_ID = re.compile(r"[a-f0-9]{32}")
 
@@ -83,7 +83,7 @@ class Store:
     def __init__(self, path: Path | None = None):
         DATA.mkdir(parents=True, exist_ok=True)
         JOBS.mkdir(parents=True, exist_ok=True)
-        self.path = path or DATA / "scanfit.db"
+        self.path = path or DATA / "phone2cad.db"
         self.lock = threading.Lock()
         with self._db() as db:
             db.execute("""CREATE TABLE IF NOT EXISTS jobs (
@@ -228,9 +228,9 @@ class Worker(threading.Thread):
     while a long job runs. Neither thread dies on an error."""
 
     def __init__(self, store: Store):
-        super().__init__(daemon=True, name="scanfit-worker")
+        super().__init__(daemon=True, name="phone2cad-worker")
         self.store, self.wake = store, threading.Event()
-        self.sweeper = threading.Thread(target=self._sweep_loop, daemon=True, name="scanfit-sweeper")
+        self.sweeper = threading.Thread(target=self._sweep_loop, daemon=True, name="phone2cad-sweeper")
 
     def healthy(self) -> bool:
         return self.is_alive() and self.sweeper.is_alive()
@@ -281,7 +281,7 @@ class Worker(threading.Thread):
         keep = bool(row and row["keep"])
         env = {**os.environ, "PYTHONUNBUFFERED": "1"}
         if keep:  # the worker must not delete the frames itself; they are moved below
-            env["SCANFIT_KEEP_FRAMES"] = "all"
+            env["PHONE2CAD_KEEP_FRAMES"] = "all"
         try:
             with open(d / "worker.log", "w") as wlog:
                 p = subprocess.Popen([*WORKER_CMD, str(d)], cwd=WORKER_DIR, stdout=wlog, stderr=subprocess.STDOUT,

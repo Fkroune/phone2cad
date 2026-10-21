@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Start the ScanFit server (docker compose) on this PC, reachable over Tailscale
+# Start the Phone2CAD server (docker compose) on this PC, reachable over Tailscale
 # only: HTTPS with this machine's Tailscale certificate, port bound to the
 # Tailscale IP. Never exposed to the public internet. Prints a QR code that
 # opens the phone app already paired with this PC.
 # Needs: Tailscale running with HTTPS enabled for the tailnet, and
 #        `sudo tailscale set --operator=$USER` once so certs can be fetched.
-# Prebuilt image: set SCANFIT_IMAGE (e.g. ghcr.io/fkroune/scanfit:1.0.3) to pull
+# Prebuilt image: set PHONE2CAD_IMAGE (e.g. ghcr.io/fkroune/phone2cad:1.1.0) to pull
 # it instead of building locally.
 # The pairing link carries a random token: only a phone that opened it can use
 # the server. `scripts/run-server --new-token` makes a new one (re-pair phones).
@@ -15,15 +15,20 @@ if [ "${1:-}" = "--new-token" ]; then NEW_TOKEN=1; shift; fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-# The public phone app. Override with SCANFIT_APP_URL in .env if you host your own copy.
-DEFAULT_APP_URL="https://scanfit-app.pages.dev"
+# The public phone app. Override with PHONE2CAD_APP_URL in .env if you host your own copy.
+DEFAULT_APP_URL="https://phone2cad-app.pages.dev"
 
 [ -f .env ] && { set -a; . ./.env; set +a; }
-APP_URL="${SCANFIT_APP_URL:-$DEFAULT_APP_URL}"
+# Renamed from ScanFit in v1.1.0: an old .env (SCANFIT_*) and pairing folder keep working.
+for v in $(compgen -e | grep '^SCANFIT_' || true); do
+  n="PHONE2CAD_${v#SCANFIT_}"; [ -n "${!n:-}" ] || export "$n=${!v}"
+done
+compgen -e | grep -q '^SCANFIT_' && echo "NOTE: rename SCANFIT_ to PHONE2CAD_ in .env (old names still work for now)." >&2
+APP_URL="${PHONE2CAD_APP_URL:-$DEFAULT_APP_URL}"
 APP_URL="${APP_URL%/}"
-[ -n "$APP_URL" ] || { echo "set SCANFIT_APP_URL in .env (the phone app's address, https://...)" >&2; exit 1; }
+[ -n "$APP_URL" ] || { echo "set PHONE2CAD_APP_URL in .env (the phone app's address, https://...)" >&2; exit 1; }
 # The server accepts requests from the phone app's origin only (CORS).
-export SCANFIT_WEB_ORIGIN="${SCANFIT_WEB_ORIGIN:-$(python3 -c 'import sys; from urllib.parse import urlsplit as u; p = u(sys.argv[1]); print(f"{p.scheme}://{p.netloc}")' "$APP_URL")}"
+export PHONE2CAD_WEB_ORIGIN="${PHONE2CAD_WEB_ORIGIN:-$(python3 -c 'import sys; from urllib.parse import urlsplit as u; p = u(sys.argv[1]); print(f"{p.scheme}://{p.netloc}")' "$APP_URL")}"
 
 [ "$(id -u)" != 0 ] || { echo "run this as your normal user, not root (the server must not run as root)" >&2; exit 1; }
 command -v tailscale >/dev/null || { echo "install Tailscale in WSL: see https://tailscale.com/download/linux" >&2; exit 1; }
@@ -33,23 +38,24 @@ IP="$(tailscale ip -4 | head -1)"
 
 # Certs and the token live on the WSL filesystem: on /mnt/<drive> chmod is ignored
 # and they would be readable by every Windows program.
-CONF="$HOME/.config/scanfit"
-export SCANFIT_CERT_DIR="${SCANFIT_CERT_DIR:-$CONF/certs}"
-export SCANFIT_TOKEN_FILE="${SCANFIT_TOKEN_FILE:-$CONF/token}"
-export SCANFIT_DATA_DIR="${SCANFIT_DATA_DIR:-$ROOT/data/server}"
-for d in "$SCANFIT_CERT_DIR" "$SCANFIT_TOKEN_FILE"; do
+[ -d "$HOME/.config/scanfit" ] && [ ! -e "$HOME/.config/phone2cad" ] && mv "$HOME/.config/scanfit" "$HOME/.config/phone2cad"
+CONF="$HOME/.config/phone2cad"
+export PHONE2CAD_CERT_DIR="${PHONE2CAD_CERT_DIR:-$CONF/certs}"
+export PHONE2CAD_TOKEN_FILE="${PHONE2CAD_TOKEN_FILE:-$CONF/token}"
+export PHONE2CAD_DATA_DIR="${PHONE2CAD_DATA_DIR:-$ROOT/data/server}"
+for d in "$PHONE2CAD_CERT_DIR" "$PHONE2CAD_TOKEN_FILE"; do
   case "$(realpath -m "$d")" in /mnt/*) echo "$d is on a Windows drive (no file permissions): keep it under \$HOME" >&2; exit 1;; esac
 done
-case "$(realpath -m "$SCANFIT_DATA_DIR")" in
-  /mnt/*) echo "WARNING: scans are stored on a Windows drive ($SCANFIT_DATA_DIR): any Windows program can read them," >&2
-          echo "         and backup or sync tools may copy them. Set SCANFIT_DATA_DIR in .env to a folder under \$HOME." >&2;;
+case "$(realpath -m "$PHONE2CAD_DATA_DIR")" in
+  /mnt/*) echo "WARNING: scans are stored on a Windows drive ($PHONE2CAD_DATA_DIR): any Windows program can read them," >&2
+          echo "         and backup or sync tools may copy them. Set PHONE2CAD_DATA_DIR in .env to a folder under \$HOME." >&2;;
 esac
-if [ -n "${SCANFIT_KEEP_FRAMES:-}" ] || [ "${SCANFIT_KEEP_FAILED:-0}" = 1 ]; then
-  echo "WARNING: SCANFIT_KEEP_FRAMES is set: scan photos are KEPT in data/server/debug/ (debugging only)." >&2
+if [ -n "${PHONE2CAD_KEEP_FRAMES:-}" ] || [ "${PHONE2CAD_KEEP_FAILED:-0}" = 1 ]; then
+  echo "WARNING: PHONE2CAD_KEEP_FRAMES is set: scan photos are KEPT in data/server/debug/ (debugging only)." >&2
 fi
-mkdir -p "$SCANFIT_CERT_DIR" "$SCANFIT_DATA_DIR" "$(dirname "$SCANFIT_TOKEN_FILE")"
-chmod 700 "$SCANFIT_CERT_DIR" "$(dirname "$SCANFIT_TOKEN_FILE")"
-CRT="$SCANFIT_CERT_DIR/server.crt" KEY="$SCANFIT_CERT_DIR/server.key"
+mkdir -p "$PHONE2CAD_CERT_DIR" "$PHONE2CAD_DATA_DIR" "$(dirname "$PHONE2CAD_TOKEN_FILE")"
+chmod 700 "$PHONE2CAD_CERT_DIR" "$(dirname "$PHONE2CAD_TOKEN_FILE")"
+CRT="$PHONE2CAD_CERT_DIR/server.crt" KEY="$PHONE2CAD_CERT_DIR/server.key"
 # Tailscale certs last 90 days; refresh when older than 30.
 if [ ! -s "$CRT" ] || [ -n "$(find "$CRT" -mtime +30)" ]; then
   tailscale cert --cert-file "$CRT" --key-file "$KEY" "$NAME"
@@ -58,25 +64,25 @@ fi
 chmod 600 "$KEY"
 
 # Pairing token: random, mode 600, outside data/. New on first start or with --new-token.
-if [ "$NEW_TOKEN" = 1 ] || [ ! -s "$SCANFIT_TOKEN_FILE" ]; then
-  (umask 077; python3 -c 'import secrets; print(secrets.token_urlsafe(32))' > "$SCANFIT_TOKEN_FILE.new")
-  mv "$SCANFIT_TOKEN_FILE.new" "$SCANFIT_TOKEN_FILE"
+if [ "$NEW_TOKEN" = 1 ] || [ ! -s "$PHONE2CAD_TOKEN_FILE" ]; then
+  (umask 077; python3 -c 'import secrets; print(secrets.token_urlsafe(32))' > "$PHONE2CAD_TOKEN_FILE.new")
+  mv "$PHONE2CAD_TOKEN_FILE.new" "$PHONE2CAD_TOKEN_FILE"
   NEW_TOKEN=1
 fi
-chmod 600 "$SCANFIT_TOKEN_FILE"
-TOKEN="$(cat "$SCANFIT_TOKEN_FILE")"
+chmod 600 "$PHONE2CAD_TOKEN_FILE"
+TOKEN="$(cat "$PHONE2CAD_TOKEN_FILE")"
 # The server reads the token and the certificate when it starts.
 RECREATE=(); { [ "$NEW_TOKEN" = 1 ] || [ "${NEW_CERT:-0}" = 1 ]; } && RECREATE=(--force-recreate)
 
-export SCANFIT_BIND="$IP" SCANFIT_UID="$(id -u)" SCANFIT_GID="$(id -g)" SCANFIT_PORT="${SCANFIT_PORT:-8443}"
-if [ -n "${SCANFIT_IMAGE:-}" ]; then
+export PHONE2CAD_BIND="$IP" PHONE2CAD_UID="$(id -u)" PHONE2CAD_GID="$(id -g)" PHONE2CAD_PORT="${PHONE2CAD_PORT:-8443}"
+if [ -n "${PHONE2CAD_IMAGE:-}" ]; then
   docker compose pull
   docker compose up -d --no-build "${RECREATE[@]}" "$@"
 else
   docker compose up -d --build "${RECREATE[@]}" "$@"
 fi
 
-SERVER="https://$NAME:$SCANFIT_PORT"
+SERVER="https://$NAME:$PHONE2CAD_PORT"
 PAIR="$APP_URL/#server=$SERVER&token=$TOKEN"
 echo "Server: $SERVER  (Tailscale only)"
 echo "Phone: scan this code with the phone's camera (or open the address below)."

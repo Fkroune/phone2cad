@@ -1,4 +1,4 @@
-"""Stands in for scanfit_worker.pipeline in API tests.
+"""Stands in for phone2cad_worker.pipeline in API tests.
 
 A file `mode` in the job folder picks a behaviour: "fail" (a failed scan),
 "orphan" (leaves a child process running, writes its pid to orphan.pid).
@@ -27,5 +27,5 @@ if mode == "fail":
 (job / "result" / "mesh.ply").write_bytes(b"ply\n")
 (job / "result" / "check.jpg").write_bytes(b"\xff\xd8\xff\xd9")
 (job / "progress.json").write_text(json.dumps({"status": "done", "stage": "done", "progress": 1.0}))
-if os.environ.get("SCANFIT_KEEP_FRAMES") != "all":  # like the real worker: the server then moves them
+if os.environ.get("PHONE2CAD_KEEP_FRAMES") != "all":  # like the real worker: the server then moves them
     shutil.rmtree(job / "frames")

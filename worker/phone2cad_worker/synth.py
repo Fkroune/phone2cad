@@ -5,7 +5,7 @@ block from ``artefacts/test_block.scad`` standing on it, from a ring of
 phone-like viewpoints. Output looks like an uploaded job: ``frames/*.jpg``
 plus ``truth.json`` (camera model and poses, used only for debugging).
 
-    python -m scanfit_worker.synth OUT_DIR [--frames 64] [--scad PATH]
+    python -m phone2cad_worker.synth OUT_DIR [--frames 64] [--scad PATH]
 """
 
 from __future__ import annotations

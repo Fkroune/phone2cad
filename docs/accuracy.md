@@ -1,6 +1,6 @@
 # Accuracy
 
-## How ScanFit was tested
+## How Phone2CAD was tested
 
 Two 3D-printed parts with known CAD were scanned with an Android phone, and
 processed on a laptop (8 GB for WSL2, an entry-level NVIDIA GPU (2 GB)):
@@ -38,7 +38,7 @@ of the shape is missing counts as a miss.
 and 33.3 × 21.0 × 36.9 mm, CAD 39.5 × 39.5 × 36.8); the result marks the overall
 size "may be incomplete".
 
-- ScanFit's bar is an error under **1 mm**: 25 of 28 dimensions were within
+- Phone2CAD's bar is an error under **1 mm**: 25 of 28 dimensions were within
   1 mm of the CAD; 23 of 28 within their own ±.
 - Two-sided scans give the most complete surface: all four came out whole.
   The torch jaw scan warned that its two sides' shapes matched poorly (0.54),
@@ -78,7 +78,7 @@ the steps after it. It gave better numbers than processing from scratch:
   tab). A missing arm or tab shows on the result page's outline photo (see
   [reading the results](reading-results.md#does-this-match-your-part)): if the
   green line misses part of the object, scan again.
-- **Outlines that leave out a piece.** ScanFit looks for a lump of texture
+- **Outlines that leave out a piece.** Phone2CAD looks for a lump of texture
   points that most outlines keep but the carved shape lost, and outlines the
   photos that cut it away again, with extra clicks inside the lump. On the first
   two-sided corner scan, which lost an arm in 5 of 6 runs from scratch before
@@ -87,7 +87,7 @@ the steps after it. It gave better numbers than processing from scratch:
   dimensions within their ±, against 3 of 4 without it); the other stayed
   missing.
 - **When the two sides' shapes match poorly**, part of the shape may be missing:
-  ScanFit warns below 0.70 on the match score. Whole shapes scored 0.74–0.86,
+  Phone2CAD warns below 0.70 on the match score. Whole shapes scored 0.74–0.86,
   except the torch jaw scan (0.54, nothing missing); shapes missing an arm
   scored 0.38–0.66.
 - **Sizes read large**: on every test scan processed from scratch, the scale
@@ -116,15 +116,15 @@ The block is described in `artefacts/test_block.scad`.
 
 You need a part with a known size: a CAD model (STL) of a 3D-printed part, or
 a part you can measure with a caliper. The corner connector from these tests
-(`scanfit-corner-connector.stl`) and the test block (`scanfit-test-block.stl`)
-are attached to each [release](https://github.com/Fkroune/scanfit/releases).
+(`phone2cad-corner-connector.stl`) and the test block (`phone2cad-test-block.stl`)
+are attached to each [release](https://github.com/Fkroune/phone2cad/releases).
 
 1. Scan it (see the [scanning guide](scanning-guide.md)).
 2. Download the 3D copy: the job's `result/mesh.ply` on the server.
 3. Compare it with the CAD:
    ```sh
    cd worker
-   python -m scanfit_worker.compare mesh.ply part.stl --save aligned.ply
+   python -m phone2cad_worker.compare mesh.ply part.stl --save aligned.ply
    ```
    This prints the scale error, the median distance and the coverage. Open
    `aligned.ply` together with the STL in a viewer (MeshLab, CloudCompare) to

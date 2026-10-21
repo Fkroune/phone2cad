@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.1.0
+
+ScanFit is now **Phone2CAD**. Same tool, a name that says what it does and is
+not shared with other apps.
+
+- Repository: `github.com/Fkroune/phone2cad` (old links redirect).
+- Server image: `ghcr.io/fkroune/phone2cad`. Older versions stay under
+  `ghcr.io/fkroune/scanfit`.
+- Phone app: `https://phone2cad-app.pages.dev`. Phones pair once again with the
+  new QR code.
+- Settings: `SCANFIT_*` became `PHONE2CAD_*`. `scripts/run-server` still reads
+  the old names and moves `~/.config/scanfit` to `~/.config/phone2cad`, so an
+  existing setup keeps its certificate. Your scans folder is unchanged.
+- The mat PDF is now `phone2cad-mat-a4.pdf`. Mats already printed still work:
+  the pattern is identical.
+
 ## v1.0.3
 
 Fewer scans that lose a piece of the part, a warning when a two-sided scan may

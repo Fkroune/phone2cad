@@ -2,7 +2,7 @@
 Ø10 through-hole) must measure within ±0.5 mm.
 
 Slow (COLMAP + BA + dense: several minutes). Uses data/synth64 when present,
-otherwise renders a fresh 64-frame set first. SCANFIT_TEST_DENSE picks the
+otherwise renders a fresh 64-frame set first. PHONE2CAD_TEST_DENSE picks the
 dense path (default: cpu, so the result does not depend on the GPU).
 """
 
@@ -14,8 +14,8 @@ from pathlib import Path
 
 import pytest
 
-from scanfit_worker import pipeline, synth
-from scanfit_worker.colmap_session import Colmap
+from phone2cad_worker import pipeline, synth
+from phone2cad_worker.colmap_session import Colmap
 
 REPO = Path(__file__).resolve().parents[2]
 TOL = 0.5
@@ -31,7 +31,7 @@ def report(tmp_path_factory) -> dict:
         synth.make_job(src, 64, synth.DEFAULT_SCAD, 3)
     job = tmp_path_factory.mktemp("job")
     shutil.copytree(src / "frames", job / "frames")  # the pipeline deletes its frames
-    rep = pipeline.run(job, dense=os.environ.get("SCANFIT_TEST_DENSE", "cpu"))
+    rep = pipeline.run(job, dense=os.environ.get("PHONE2CAD_TEST_DENSE", "cpu"))
     assert not (job / "frames").exists(), "frames must be deleted after the job"
     assert (job / "result" / "mesh.ply").stat().st_size > 10_000
     check = job / "result" / "check.jpg"

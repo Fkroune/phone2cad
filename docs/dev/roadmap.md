@@ -74,7 +74,7 @@ Low-severity risks accepted for v1.0.0 (see the
 [security review](security-review.md)). None is reachable in normal use, but
 each should be closed.
 
-- **Block the container's internet access.** ScanFit needs no network at run
+- **Block the container's internet access.** Phone2CAD needs no network at run
   time (measured: no outgoing traffic during a scan), but the container could
   still reach the internet. Goal: the server answers only on the tailnet port,
   with all outgoing traffic blocked, for example an internal Docker network
@@ -82,17 +82,17 @@ each should be closed.
 - **Keep the TLS key and the pairing code away from the worker.** The worker
   decodes photos and runs as the same user as the server, so the key and code
   are not shielded from it. Goal: run the worker under its own user
-  ID without access to `/run/scanfit`, or end TLS outside the container (for
+  ID without access to `/run/phone2cad`, or end TLS outside the container (for
   example in a reverse proxy) so the key never enters it.
 - **Base image and OpenCV updates.** The pinned base image carries known CVEs
-  in OS packages ScanFit does not use (GnuPG, OpenSSL DTLS), and the OpenCV
-  wheel bundles FFmpeg libraries with known CVEs in video code ScanFit never
+  in OS packages Phone2CAD does not use (GnuPG, OpenSSL DTLS), and the OpenCV
+  wheel bundles FFmpeg libraries with known CVEs in video code Phone2CAD never
   calls. Goal: move to a patched base digest and a newer OpenCV wheel as soon as
   they pass the synthetic acceptance; check with trivy and grype on every
   release.
 - **Slim the image.** Open3D pulls in an unused web and notebook stack (dash,
   flask, werkzeug, ipywidgets, nbformat and more). Goal: install Open3D without
-  its optional packages plus only the subset ScanFit imports, re-generate the
+  its optional packages plus only the subset Phone2CAD imports, re-generate the
   hashed `requirements.lock` with `scripts/lock`, and keep the change only if
   the synthetic acceptance passes in the hardened container (GPU and CPU).
   Fewer packages also means fewer CVEs to track. Not yet tried.

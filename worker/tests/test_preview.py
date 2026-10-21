@@ -4,7 +4,7 @@ import struct
 
 import numpy as np
 
-from scanfit_worker.preview import depth_points
+from phone2cad_worker.preview import depth_points
 
 BOX = (np.full(3, -100.0), np.full(3, 100.0))
 

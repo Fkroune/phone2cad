@@ -1,3 +1,3 @@
-"""ScanFit API server."""
+"""Phone2CAD API server."""
 
-__version__ = "1.0.3"
+__version__ = "1.1.0"

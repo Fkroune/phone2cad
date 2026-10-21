@@ -1,4 +1,4 @@
-"""ScanFit A4 ChArUco mat: one definition shared by the PDF generator, the
+"""Phone2CAD A4 ChArUco mat: one definition shared by the PDF generator, the
 synthetic renderer, the worker and the web app (via ``mat.json``).
 
 Coordinate frames
@@ -11,7 +11,7 @@ Coordinate frames
 Only a ring of squares around the edge is printed; the centre stays clear
 for the part, a 100 mm scale bar and an ID-1 card outline.
 
-Run ``python -m scanfit_worker.mat --pdf out.pdf --json mat.json`` to
+Run ``python -m phone2cad_worker.mat --pdf out.pdf --json mat.json`` to
 generate the printable mat and the layout file for the browser.
 """
 
@@ -202,7 +202,7 @@ class MatSpec:
         # Header in the top margin.
         items.append((
             "text", ox, oy - 4.5, 3.2, 0.0,
-            f"ScanFit mat A4 - print at 100 % (actual size) - squares {self.square_mm:g} mm",
+            f"Phone2CAD mat A4 - print at 100 % (actual size) - squares {self.square_mm:g} mm",
         ))
         return items
 
@@ -275,7 +275,7 @@ class MatSpec:
     def to_json(self) -> dict:
         """Layout for the browser: marker corners in world mm."""
         return {
-            "schema": "scanfit.mat.v1",
+            "schema": "phone2cad.mat.v1",
             "page": "A4",
             "dictionary": self.dictionary,
             "squaresX": self.squares_x,
@@ -298,15 +298,15 @@ def printed_mat() -> MatSpec:
     """The mat as it came out of the printer. Printers often scale a page by
     1-3 % ("fit to page"), and every measurement scales with it. Measure the
     length of 10 squares along the printed ring with a ruler and set
-    SCANFIT_MAT_10_SQUARES_MM (150 when printed at exactly 100 %); unset means
+    PHONE2CAD_MAT_10_SQUARES_MM (150 when printed at exactly 100 %); unset means
     the nominal size."""
-    v = os.environ.get("SCANFIT_MAT_10_SQUARES_MM", "").strip()
+    v = os.environ.get("PHONE2CAD_MAT_10_SQUARES_MM", "").strip()
     if not v:
         return DEFAULT_MAT
     mm = float(v)
     nominal = 10 * DEFAULT_MAT.square_mm
     if not 0.9 * nominal <= mm <= 1.1 * nominal:
-        raise ValueError(f"SCANFIT_MAT_10_SQUARES_MM={v}: 10 squares should measure about {nominal:g} mm")
+        raise ValueError(f"PHONE2CAD_MAT_10_SQUARES_MM={v}: 10 squares should measure about {nominal:g} mm")
     k = mm / nominal
     return replace(DEFAULT_MAT, square_mm=DEFAULT_MAT.square_mm * k, marker_mm=DEFAULT_MAT.marker_mm * k)
 

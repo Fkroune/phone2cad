@@ -15,7 +15,7 @@ On Linux, skip step 1 and run the commands in any terminal.
 
 ## 1. Windows only: WSL2 and Ubuntu
 
-ScanFit runs on Linux. On Windows it runs inside **WSL2** (Windows Subsystem
+Phone2CAD runs on Linux. On Windows it runs inside **WSL2** (Windows Subsystem
 for Linux), a small Linux system that comes with Windows.
 
 1. Right-click the Start button, choose **Terminal (Admin)** (or **Windows
@@ -39,13 +39,13 @@ for Linux), a small Linux system that comes with Windows.
 
 ## 2. Docker
 
-ScanFit's server runs inside **Docker**, which packs it with everything it
+Phone2CAD's server runs inside **Docker**, which packs it with everything it
 needs (COLMAP, the outline model, Python) so you install nothing else by hand.
 
 - **Windows**: install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
   Open it, go to **Settings → Resources → WSL integration**, switch on
   **Ubuntu**, and click **Apply & restart**. Docker Desktop must be running
-  whenever you use ScanFit. With an NVIDIA card, keep its Windows driver up to
+  whenever you use Phone2CAD. With an NVIDIA card, keep its Windows driver up to
   date: Docker Desktop then uses the card without anything else to install.
 - **Linux**: install [Docker Engine](https://docs.docker.com/engine/install/)
   with the Compose plugin, then add yourself to the `docker` group
@@ -56,15 +56,15 @@ needs (COLMAP, the outline model, Python) so you install nothing else by hand.
 Check in the Ubuntu window (or Linux terminal): `docker run --rm hello-world`
 prints "Hello from Docker!".
 
-## 3. Get ScanFit
+## 3. Get Phone2CAD
 
 In the Ubuntu window:
 
 ```sh
 sudo apt update && sudo apt install -y git qrencode
 cd ~
-git clone https://github.com/Fkroune/scanfit.git
-cd scanfit
+git clone https://github.com/Fkroune/phone2cad.git
+cd phone2cad
 cp .env.example .env
 ```
 
@@ -104,7 +104,7 @@ devices (your "tailnet"). Nothing is opened to the internet.
    Certificate Transparency logs, so the PC's name and your tailnet's name
    (such as `my-pc.tail1234.ts.net`) become publicly visible, for good. Before
    the first start, give the PC a neutral name (not your own name):
-   `sudo tailscale set --hostname=scanfit-pc`, and keep the random tailnet name
+   `sudo tailscale set --hostname=phone2cad-pc`, and keep the random tailnet name
    Tailscale chose.
 4. Once, on the PC: `sudo tailscale set --operator=$USER`. This lets your user
    control Tailscale on this PC without `sudo`, so `run-server` can fetch the
@@ -125,7 +125,7 @@ that would put it on your LAN or the internet.
 
 ## 5. Check and start
 
-In the `scanfit` folder:
+In the `phone2cad` folder:
 
 ```sh
 scripts/setup-check
@@ -152,7 +152,7 @@ the same terminal window, just above the long pairing link. The QR code needs
 Without it, only the link is printed: install it with `sudo apt install
 qrencode`, run `scripts/run-server` again, or type the link into the phone's
 browser by hand. The first start also creates the PC's **pairing code** (in
-`~/.config/scanfit/token`, readable only by you); the QR code and the link
+`~/.config/phone2cad/token`, readable only by you); the QR code and the link
 below it contain it. Treat that link like a password: anyone in your tailnet
 who has it can send scans to your PC and read your results.
 
@@ -160,11 +160,11 @@ who has it can send scans to your PC and read your results.
 
 ## 6. The mat
 
-The mat is a printed A4 sheet. Its markers tell ScanFit where each photo was
+The mat is a printed A4 sheet. Its markers tell Phone2CAD where each photo was
 taken from, and how big a millimetre is.
 
-1. Print `web/static/scanfit-mat-a4.pdf` on plain white A4 paper. On Windows,
-   `explorer.exe web/static` (in the `scanfit` folder) opens that folder in
+1. Print `web/static/phone2cad-mat-a4.pdf` on plain white A4 paper. On Windows,
+   `explorer.exe web/static` (in the `phone2cad` folder) opens that folder in
    File Explorer; the phone app's home page also has a download link. In the
    print dialog choose **100 %** or **Actual size**, never "Fit to page".
 2. Lay it flat on a table. Tape the corners if the paper curls.
@@ -172,7 +172,7 @@ taken from, and how big a millimetre is.
    printed ring and measure the length of **10 squares in a row** (black and
    white squares both count), in millimetres. At exactly 100 % they measure
    150 mm.
-4. Put that length in `.env`, for example `SCANFIT_MAT_10_SQUARES_MM=149.5`,
+4. Put that length in `.env`, for example `PHONE2CAD_MAT_10_SQUARES_MM=149.5`,
    and run `scripts/run-server` again.
 
 Do not skip step 3. Printers often scale a page by 1–3 %, and every
@@ -184,7 +184,7 @@ measurement scales with it: a 3 mm error on 150 mm means 2 % on every result.
 
 1. Check that the Tailscale app is on.
 2. Scan the QR code from `run-server` with the phone's camera. It opens the
-   phone app in Chrome (https://scanfit-app.pages.dev). The app shows the PC's
+   phone app in Chrome (https://phone2cad-app.pages.dev). The app shows the PC's
    name (for example **my-pc**) and asks whether to pair with it: check that it
    is your PC, then tap **Pair**. A pairing link never switches the phone to
    another PC without asking.
@@ -205,16 +205,16 @@ unpair a phone yourself, tap **Forget this PC** in the app.
 ## Who can reach the server
 
 Tailscale decides which devices can connect to the PC; the pairing code
-decides which of them may use ScanFit. If your tailnet has other people (family
+decides which of them may use Phone2CAD. If your tailnet has other people (family
 or team members) or devices you do not fully trust:
 
 - limit who can reach port 8443 of the PC in the
   [access controls](https://login.tailscale.com/admin/acls) of your tailnet,
   for example a grant that allows only your own phone:
   ```json
-  {"grants": [{"src": ["your-name@example.com"], "dst": ["tag:scanfit"], "ip": ["tcp:8443"]}]}
+  {"grants": [{"src": ["your-name@example.com"], "dst": ["tag:phone2cad"], "ip": ["tcp:8443"]}]}
   ```
-  (tag the PC `tag:scanfit` in the admin console, and remove the default
+  (tag the PC `tag:phone2cad` in the admin console, and remove the default
   "allow all" rule if you keep one);
 - do not share the PC with other tailnets (node sharing), and turn on device
   approval so new devices need your OK;
@@ -227,14 +227,14 @@ or team members) or devices you do not fully trust:
   (it matches the container's port; make it permanent with your firewall
   tooling, since it does not survive a reboot). Assumes Tailscale's standard
   interface tailscale0 (not userspace-networking mode); the rule matches the
-  container port 8443 even if SCANFIT_PORT is changed. We have not tested this
+  container port 8443 even if PHONE2CAD_PORT is changed. We have not tested this
   on native Linux; please report what you find.
 
 Next: [the scanning guide](scanning-guide.md).
 
 ## Optional: a prebuilt server image
 
-To skip the 10–20 minute build, put `SCANFIT_IMAGE=ghcr.io/fkroune/scanfit:1.0.3`
+To skip the 10–20 minute build, put `PHONE2CAD_IMAGE=ghcr.io/fkroune/phone2cad:1.1.0`
 in `.env`: `run-server` then downloads the image built for each release.
 
 ## Optional: host your own copy of the phone app
@@ -245,5 +245,5 @@ it to Cloudflare Pages (free plan). It needs Node.js 20 or newer; run
 is pinned in `web/package-lock.json`). It deploys only committed code, and
 before uploading it checks every file for local paths, user and machine names,
 tailnet addresses, e-mail addresses and keys (`scripts/privacy-scan`).
-Then put your app's address in `.env` as `SCANFIT_APP_URL`. Without it, `run-server`
-uses the public app at https://scanfit-app.pages.dev.
+Then put your app's address in `.env` as `PHONE2CAD_APP_URL`. Without it, `run-server`
+uses the public app at https://phone2cad-app.pages.dev.

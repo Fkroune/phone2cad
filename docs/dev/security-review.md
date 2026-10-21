@@ -72,14 +72,14 @@ tree, and only its clean first commit is published. So 29 are fixed and 7 remain
 - The worker that reads your photos runs as the same user as the server, so the
   PC's TLS key and pairing code are not shielded from it. Keep the image up to
   date; a separate worker user is planned.
-- The container is not blocked from the network, although ScanFit never uses it
+- The container is not blocked from the network, although Phone2CAD never uses it
   at run time. Planned: block outgoing traffic.
 - On native Linux, Docker's own firewall rules can bypass `ufw` and similar
   tools; this was not tested (the tested setup is Windows with WSL2). A rule
   that limits the port to Tailscale is in
   [getting started](../getting-started.md#who-can-reach-the-server).
 - Some operating-system packages and libraries in the base image have known
-  published advisories in parts ScanFit does not use (GnuPG, DTLS, the video
+  published advisories in parts Phone2CAD does not use (GnuPG, DTLS, the video
   codecs bundled with OpenCV). They will be updated with the base image.
 - Who can reach the server depends on your tailnet's rules; see
   [getting started](../getting-started.md#who-can-reach-the-server).

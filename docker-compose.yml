@@ -1,12 +1,12 @@
-# ScanFit server + worker on the PC. Reachable over Tailscale only: the port is
-# published on the Tailscale IP (SCANFIT_BIND, set by scripts/run-server).
+# Phone2CAD server + worker on the PC. Reachable over Tailscale only: the port is
+# published on the Tailscale IP (PHONE2CAD_BIND, set by scripts/run-server).
 # No tunnel, no public exposure.
 services:
-  scanfit:
+  phone2cad:
     build: .
-    image: "${SCANFIT_IMAGE:-scanfit:local}"
+    image: "${PHONE2CAD_IMAGE:-phone2cad:local}"
     restart: unless-stopped
-    user: "${SCANFIT_UID:-1000}:${SCANFIT_GID:-1000}"
+    user: "${PHONE2CAD_UID:-1000}:${PHONE2CAD_GID:-1000}"
     # Hardening: no root, no Linux capabilities, no privilege escalation, a
     # read-only system (writes go to /data and /tmp only), an init process that
     # reaps finished COLMAP processes, and a process limit.
@@ -17,30 +17,30 @@ services:
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     ports:
-      - "${SCANFIT_BIND:-127.0.0.1}:${SCANFIT_PORT:-8443}:8443"
+      - "${PHONE2CAD_BIND:-127.0.0.1}:${PHONE2CAD_PORT:-8443}:8443"
     environment:
-      SCANFIT_PORT: "8443"
-      SCANFIT_WEB_ORIGIN: "${SCANFIT_WEB_ORIGIN:?run via scripts/run-server}"
-      SCANFIT_TLS_CERT: /certs/server.crt
-      SCANFIT_TLS_KEY: /certs/server.key
-      SCANFIT_TOKEN_FILE: /run/scanfit/token
-      SCANFIT_DENSE: "${SCANFIT_DENSE:-auto}"
-      SCANFIT_MAX_IMAGE_SIZE: "${SCANFIT_MAX_IMAGE_SIZE:-1600}"
-      SCANFIT_DENSE_IMAGE_SIZE: "${SCANFIT_DENSE_IMAGE_SIZE:-1000}"
-      SCANFIT_KEEP_FAILED: "${SCANFIT_KEEP_FAILED:-0}"
-      SCANFIT_KEEP_FRAMES: "${SCANFIT_KEEP_FRAMES:-}"
-      SCANFIT_SFM_MODE: "${SCANFIT_SFM_MODE:-register}"
-      SCANFIT_MAT_10_SQUARES_MM: "${SCANFIT_MAT_10_SQUARES_MM:-}"
-      SCANFIT_DENSE_MAX_FRAMES: "${SCANFIT_DENSE_MAX_FRAMES:-32}"
-      SCANFIT_RESULT_TTL_H: "${SCANFIT_RESULT_TTL_H:-24}"
-      SCANFIT_MAX_QUEUE: "${SCANFIT_MAX_QUEUE:-5}"
-      SCANFIT_MAX_OPEN: "${SCANFIT_MAX_OPEN:-8}"
-      SCANFIT_MAX_JOB_MB: "${SCANFIT_MAX_JOB_MB:-1500}"
-      SCANFIT_MIN_FREE_GB: "${SCANFIT_MIN_FREE_GB:-2}"
+      PHONE2CAD_PORT: "8443"
+      PHONE2CAD_WEB_ORIGIN: "${PHONE2CAD_WEB_ORIGIN:?run via scripts/run-server}"
+      PHONE2CAD_TLS_CERT: /certs/server.crt
+      PHONE2CAD_TLS_KEY: /certs/server.key
+      PHONE2CAD_TOKEN_FILE: /run/phone2cad/token
+      PHONE2CAD_DENSE: "${PHONE2CAD_DENSE:-auto}"
+      PHONE2CAD_MAX_IMAGE_SIZE: "${PHONE2CAD_MAX_IMAGE_SIZE:-1600}"
+      PHONE2CAD_DENSE_IMAGE_SIZE: "${PHONE2CAD_DENSE_IMAGE_SIZE:-1000}"
+      PHONE2CAD_KEEP_FAILED: "${PHONE2CAD_KEEP_FAILED:-0}"
+      PHONE2CAD_KEEP_FRAMES: "${PHONE2CAD_KEEP_FRAMES:-}"
+      PHONE2CAD_SFM_MODE: "${PHONE2CAD_SFM_MODE:-register}"
+      PHONE2CAD_MAT_10_SQUARES_MM: "${PHONE2CAD_MAT_10_SQUARES_MM:-}"
+      PHONE2CAD_DENSE_MAX_FRAMES: "${PHONE2CAD_DENSE_MAX_FRAMES:-32}"
+      PHONE2CAD_RESULT_TTL_H: "${PHONE2CAD_RESULT_TTL_H:-24}"
+      PHONE2CAD_MAX_QUEUE: "${PHONE2CAD_MAX_QUEUE:-5}"
+      PHONE2CAD_MAX_OPEN: "${PHONE2CAD_MAX_OPEN:-8}"
+      PHONE2CAD_MAX_JOB_MB: "${PHONE2CAD_MAX_JOB_MB:-1500}"
+      PHONE2CAD_MIN_FREE_GB: "${PHONE2CAD_MIN_FREE_GB:-2}"
     volumes:
-      - ${SCANFIT_DATA_DIR:-./data/server}:/data
-      - ${SCANFIT_CERT_DIR:?run via scripts/run-server}:/certs:ro
-      - ${SCANFIT_TOKEN_FILE:?run via scripts/run-server}:/run/scanfit/token:ro
+      - ${PHONE2CAD_DATA_DIR:-./data/server}:/data
+      - ${PHONE2CAD_CERT_DIR:?run via scripts/run-server}:/certs:ro
+      - ${PHONE2CAD_TOKEN_FILE:?run via scripts/run-server}:/run/phone2cad/token:ro
     # Bounded local logs (the server writes no access log: no client addresses or job ids).
     logging:
       driver: local

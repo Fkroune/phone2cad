@@ -1,7 +1,7 @@
 # How it works
 
 From a few minutes of phone video to measurements in millimetres, in seven
-steps. The parameters of each step are in the code under `worker/scanfit_worker/`.
+steps. The parameters of each step are in the code under `worker/phone2cad_worker/`.
 
 ![Diagram: film on the phone, then on the PC camera solve, outlines, shape, faces and holes, then the result on the phone](../images/pipeline.png)
 
@@ -9,7 +9,7 @@ steps. The parameters of each step are in the code under `worker/scanfit_worker/
 
 The A4 mat carries a ring of ChArUco markers: chessboard squares with coded
 patterns. Each marker has a known position in millimetres. In every photo where
-enough markers are visible, ScanFit knows exactly where the camera was.
+enough markers are visible, Phone2CAD knows exactly where the camera was.
 
 ## 2. The phone picks good frames
 

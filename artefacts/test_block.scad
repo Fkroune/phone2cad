@@ -1,4 +1,4 @@
-// ScanFit v0 ground-truth artefact.
+// Phone2CAD v0 ground-truth artefact.
 // A 40 x 30 x 20 mm block with a 10 mm through-hole along its height.
 // The worker's acceptance test reads the parameters below, so keep the
 // "name = value;" form when editing them.

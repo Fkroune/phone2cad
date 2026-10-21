@@ -4,7 +4,7 @@
 
 ## The 3D copy
 
-Turn it with one finger, zoom with two. Its colours show how sure ScanFit is
+Turn it with one finger, zoom with two. Its colours show how sure Phone2CAD is
 about each face:
 
 | Colour | Grade | ± |
@@ -55,7 +55,7 @@ the test parts, most measured values fell inside their ± (see
 
 The ± does not include one known bias: **sizes may read up to ~1.5 % large**,
 because the shape is carved from outlines, which can only err on the large
-side (0.4–1.65 % on the test scans). ScanFit's aim is errors under 1 mm; on a
+side (0.4–1.65 % on the test scans). Phone2CAD's aim is errors under 1 mm; on a
 40 mm part, 1.5 % is 0.6 mm.
 
 ## "Experimental"

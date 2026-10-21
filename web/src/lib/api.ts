@@ -94,10 +94,10 @@ function isNumbers(a: unknown, max: number): a is number[] {
 	return Array.isArray(a) && a.length <= max && a.every((v) => typeof v === 'number' && Number.isFinite(v));
 }
 
-/** Is the PC there, is it ScanFit, and does it accept this phone's pairing token? */
+/** Is the PC there, is it Phone2CAD, and does it accept this phone's pairing token? */
 export async function health(): Promise<void> {
 	const r = (await json(await call('/api/health'), 4096)) as { name?: unknown };
-	if (r?.name !== 'scanfit') throw new ApiError('http', 'That address is not a ScanFit PC.');
+	if (r?.name !== 'phone2cad') throw new ApiError('http', 'That address is not a Phone2CAD PC.');
 	await call('/api/session');
 }
 

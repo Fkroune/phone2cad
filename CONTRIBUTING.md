@@ -25,8 +25,8 @@ COLMAP runs in Docker (`colmap/colmap`); the worker starts it for each step.
 To run the API by itself (it refuses to start without a pairing token):
 
 ```sh
-(umask 077; python3 -c 'import secrets; print(secrets.token_urlsafe(32))' > ~/.config/scanfit-dev-token)
-cd server && SCANFIT_TOKEN_FILE=~/.config/scanfit-dev-token SCANFIT_WEB_ORIGIN=http://localhost:5173 python -m app
+(umask 077; python3 -c 'import secrets; print(secrets.token_urlsafe(32))' > ~/.config/phone2cad-dev-token)
+cd server && PHONE2CAD_TOKEN_FILE=~/.config/phone2cad-dev-token PHONE2CAD_WEB_ORIGIN=http://localhost:5173 python -m app
 ```
 
 The server image installs the exact, hash-checked versions in
@@ -44,7 +44,7 @@ scripts/privacy-scan web/build    # after npm run build: nothing personal in the
 ```
 
 Every change to the measuring pipeline should also be scored on real scans.
-Measure the before and after with `python -m scanfit_worker.compare` against a
+Measure the before and after with `python -m phone2cad_worker.compare` against a
 CAD model, and say in the pull request what changed. Do not tune settings to
 one scan: a change must help, or at least not hurt, across several parts.
 
@@ -53,21 +53,21 @@ one scan: a change must help, or at least not hurt, across several parts.
 These environment variables exist for working on the pipeline. The Docker
 setup (`docker-compose.yml`) does not pass them on, so a normal server never
 sees them; set them only when you run the worker yourself, for example
-`python -m scanfit_worker.pipeline JOB_DIR`, on frames you made.
+`python -m phone2cad_worker.pipeline JOB_DIR`, on frames you made.
 
-- `SCANFIT_RESUME=1`: reuse the camera solve (`work/<side>/state.pkl`) and the
+- `PHONE2CAD_RESUME=1`: reuse the camera solve (`work/<side>/state.pkl`) and the
   dense points of an earlier run of the same job folder, to iterate on the later
   stages without redoing the slow ones. The state file is a Python pickle that
   the worker wrote itself; **never** point this at a job folder or file from
   someone else, because unpickling runs code.
-- `SCANFIT_HOLES_DEBUG=/path/to/folder`: write each face's flattened photos
+- `PHONE2CAD_HOLES_DEBUG=/path/to/folder`: write each face's flattened photos
   (`face01_<frame>.png`) there while holes are searched. These are scan photos:
   the privacy rules apply, and nothing deletes the folder for you.
 
-Other `SCANFIT_*` variables that are not in `.env.example` (`SCANFIT_WORKER_CMD`,
-`SCANFIT_COLMAP`, `SCANFIT_COLMAP_IMAGE`, `SCANFIT_SEG_VIEWS`, `SCANFIT_SAM_*`,
-`SCANFIT_DENSE_CROP_MAX`, `SCANFIT_DENSE_TIMEOUT_S`, `SCANFIT_CPU_SIFT_THREADS`,
-`SCANFIT_GPU`, `SCANFIT_MAX_FRAMES`, `SCANFIT_MAX_FRAME_MB`, `SCANFIT_MAX_FRAME_MP`)
+Other `PHONE2CAD_*` variables that are not in `.env.example` (`PHONE2CAD_WORKER_CMD`,
+`PHONE2CAD_COLMAP`, `PHONE2CAD_COLMAP_IMAGE`, `PHONE2CAD_SEG_VIEWS`, `PHONE2CAD_SAM_*`,
+`PHONE2CAD_DENSE_CROP_MAX`, `PHONE2CAD_DENSE_TIMEOUT_S`, `PHONE2CAD_CPU_SIFT_THREADS`,
+`PHONE2CAD_GPU`, `PHONE2CAD_MAX_FRAMES`, `PHONE2CAD_MAX_FRAME_MB`, `PHONE2CAD_MAX_FRAME_MP`)
 are tuning and test settings; their defaults are what the release was tested with.
 
 ## Rules

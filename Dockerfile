@@ -28,14 +28,14 @@ sys.exit('SAM download: SHA-256 mismatch ' + h) if h != '$SAM_SHA256' else None;
 zipfile.ZipFile('/tmp/sam.zip').extractall('/models/sam21_tiny')" \
  && rm /tmp/sam.zip && ls /models/sam21_tiny/sam2.1_hiera_tiny.encoder.onnx
 # OpenCV refuses to decode pictures above ~67 MP (the server already refuses frames above 64 MP).
-ENV SCANFIT_SAM_DIR=/models/sam21_tiny ORT_DISABLE_TELEMETRY=1 OPENCV_IO_MAX_IMAGE_PIXELS=67108864
+ENV PHONE2CAD_SAM_DIR=/models/sam21_tiny ORT_DISABLE_TELEMETRY=1 OPENCV_IO_MAX_IMAGE_PIXELS=67108864
 
-COPY LICENSE NOTICE THIRD_PARTY.md /usr/share/doc/scanfit/
-COPY worker/scanfit_worker /app/worker/scanfit_worker
+COPY LICENSE NOTICE THIRD_PARTY.md /usr/share/doc/phone2cad/
+COPY worker/phone2cad_worker /app/worker/phone2cad_worker
 COPY worker/third_party /app/worker/third_party
 COPY server/app /app/server/app
 
-ENV SCANFIT_DATA=/data SCANFIT_WORKER_DIR=/app/worker PYTHONPATH=/app/worker SCANFIT_HOST=0.0.0.0 SCANFIT_PORT=8443
+ENV PHONE2CAD_DATA=/data PHONE2CAD_WORKER_DIR=/app/worker PYTHONPATH=/app/worker PHONE2CAD_HOST=0.0.0.0 PHONE2CAD_PORT=8443
 WORKDIR /app/server
 EXPOSE 8443
 # Never root; docker compose sets your own user id instead (scripts/run-server).

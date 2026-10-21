@@ -91,12 +91,12 @@
 </script>
 
 <main>
-	<h1>ScanFit</h1>
+	<h1>Phone2CAD</h1>
 
 	<section class="card">
 		<h2><span class="n">1</span> Print the mat</h2>
 		<p class="muted">Print at 100 % (actual size) on A4 and lay it flat on a table.</p>
-		<p><a href="/scanfit-mat-a4.pdf" download>Download the mat (PDF)</a></p>
+		<p><a href="/phone2cad-mat-a4.pdf" download>Download the mat (PDF)</a></p>
 	</section>
 
 	<section class="card">

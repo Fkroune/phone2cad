@@ -7,7 +7,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 [ -f "$ROOT/.env" ] && set -a && . "$ROOT/.env" && set +a
-PROJECT="${SCANFIT_PAGES_PROJECT:-scanfit-app}"
+PROJECT="${PHONE2CAD_PAGES_PROJECT:-phone2cad-app}"
 export WRANGLER_SEND_METRICS=false
 
 if [ -n "$(git -C "$ROOT" status --porcelain --untracked-files=no)" ]; then
@@ -32,5 +32,5 @@ if LIST="$(wrangler pages project list 2>/dev/null)"; then
 fi
 wrangler pages deploy build --project-name "$PROJECT" --branch main \
   --commit-hash "$(git -C "$ROOT" rev-parse HEAD)" --commit-message "$(git -C "$ROOT" log -1 --format=%s)"
-echo "Deployed. Put the app address (https://<name>.pages.dev) in .env as SCANFIT_APP_URL"
+echo "Deployed. Put the app address (https://<name>.pages.dev) in .env as PHONE2CAD_APP_URL"
 echo "(see: cd web && npx --no-install wrangler pages project list), then scripts/run-server."

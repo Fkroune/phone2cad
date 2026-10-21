@@ -1,4 +1,4 @@
-"""ScanFit API: receives frames from the phone, queues jobs, serves results.
+"""Phone2CAD API: receives frames from the phone, queues jobs, serves results.
 
 Served over HTTPS (the PC's Tailscale certificate) on the PC's Tailscale
 address only (see scripts/run-server). Every route except /api/health needs
@@ -27,12 +27,12 @@ from . import __version__, jobs
 from .jpeg import BadJpeg, strip_metadata
 
 VERSION = __version__
-log = logging.getLogger("scanfit")
+log = logging.getLogger("phone2cad")
 
 
 def _origins() -> list[str]:
     out = []
-    for o in os.environ.get("SCANFIT_WEB_ORIGIN", "").split(","):
+    for o in os.environ.get("PHONE2CAD_WEB_ORIGIN", "").split(","):
         o = o.strip().rstrip("/")
         if not o:
             continue
@@ -40,18 +40,18 @@ def _origins() -> list[str]:
         local = u.hostname in ("localhost", "127.0.0.1")
         if u.scheme not in ("https", "http") or (u.scheme == "http" and not local) or not u.hostname \
                 or u.path or u.query or "*" in o:
-            raise RuntimeError(f"SCANFIT_WEB_ORIGIN: {o!r} is not an https origin like https://scanfit-app.pages.dev")
+            raise RuntimeError(f"PHONE2CAD_WEB_ORIGIN: {o!r} is not an https origin like https://phone2cad-app.pages.dev")
         out.append(o)
     return out
 
 
 def _token() -> bytes:
-    """The pairing token: SCANFIT_TOKEN_FILE (written by run-server, mode 600)."""
-    path = os.environ.get("SCANFIT_TOKEN_FILE")
+    """The pairing token: PHONE2CAD_TOKEN_FILE (written by run-server, mode 600)."""
+    path = os.environ.get("PHONE2CAD_TOKEN_FILE")
     tok = Path(path).read_text().strip() if path else ""
     if len(tok) < 32:
         raise RuntimeError("no pairing token: start the server with scripts/run-server "
-                           "(or set SCANFIT_TOKEN_FILE to a file holding a random token of 32+ characters)")
+                           "(or set PHONE2CAD_TOKEN_FILE to a file holding a random token of 32+ characters)")
     return tok.encode()
 
 
@@ -70,7 +70,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="ScanFit", version=VERSION, docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+app = FastAPI(title="Phone2CAD", version=VERSION, docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 
 SECURITY_HEADERS = [(b"cache-control", b"no-store"), (b"x-content-type-options", b"nosniff"),
                     (b"referrer-policy", b"no-referrer"), (b"content-security-policy", b"default-src 'none'"),
@@ -165,7 +165,7 @@ def _job(jid: str):
 
 @app.get("/api/health")
 def health():
-    return {"ok": worker.healthy(), "name": "scanfit", "version": VERSION}
+    return {"ok": worker.healthy(), "name": "phone2cad", "version": VERSION}
 
 
 @app.get("/api/session", status_code=204)

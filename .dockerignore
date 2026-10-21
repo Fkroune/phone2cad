@@ -6,7 +6,7 @@
 !NOTICE
 !THIRD_PARTY.md
 !server/app
-!worker/scanfit_worker
+!worker/phone2cad_worker
 !worker/third_party
 **/__pycache__
 **/*.pyc

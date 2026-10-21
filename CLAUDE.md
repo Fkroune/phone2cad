@@ -1,4 +1,4 @@
-# ScanFit
+# Phone2CAD
 
 Phone films a part on a printed ChArUco mat → PC reconstructs it at metric scale →
 phone shows the 3D copy and the measured faces and holes. How it works:
@@ -8,7 +8,7 @@ phone shows the 3D copy and the measured faces and holes. How it works:
 
 **Never publish personal data, paths, host or tailnet names, keys or room photos.**
 This covers commits, docs, images, issues, release assets and the web bundle. Use
-example values (`my-pc.tail1234.ts.net`, `/path/to/scanfit`) instead. Images in the
+example values (`my-pc.tail1234.ts.net`, `/path/to/phone2cad`) instead. Images in the
 docs are renders, app screenshots on synthetic frames, or scan frames warped onto
 the printed mat so that nothing beyond the paper shows; strip all metadata.
 
@@ -25,7 +25,7 @@ the printed mat so that nothing beyond the paper shows; strip all metadata.
 - `web/` SvelteKit + TypeScript, static adapter. Capture (`/scan`, two sides by
   default, `?quick=1` for one side), results (`/result`).
 - `server/` FastAPI: job API, CORS for the app origin only, spawns the worker per job.
-- `worker/` Python pipeline (`python -m scanfit_worker.pipeline JOB_DIR`): mat
+- `worker/` Python pipeline (`python -m phone2cad_worker.pipeline JOB_DIR`): mat
   calibration → COLMAP → outlines (SAM 2.1) → visual hull → faces, holes → result
   (`features.json`, `mesh.ply`, `check.jpg`).
 - `artefacts/test_block.scad`: synthetic test part.

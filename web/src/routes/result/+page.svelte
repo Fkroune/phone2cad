@@ -276,7 +276,7 @@
 		</ul>
 		<p class="muted small">
 			Estimates, not certified measurements. Check critical sizes before relying on them.
-			<a href="https://github.com/Fkroune/scanfit#disclaimer-experimental-software-use-at-your-own-risk"
+			<a href="https://github.com/Fkroune/phone2cad#disclaimer-experimental-software-use-at-your-own-risk"
 				target="_blank" rel="noopener noreferrer">Disclaimer</a>
 		</p>
 		{#if warnings.length}

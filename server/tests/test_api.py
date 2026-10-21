@@ -10,7 +10,7 @@ from app import __version__, jobs, main
 from app.jpeg import BadJpeg, strip_metadata
 from app.main import app
 
-ORIGIN = "https://scanfit.pages.dev"
+ORIGIN = "https://phone2cad.pages.dev"
 AUTH = {"Authorization": f"Bearer {TOKEN}"}
 
 
@@ -108,7 +108,7 @@ def test_strip_metadata_keeps_pixels_of_a_real_jpeg():
 
 def test_health_has_no_host_details_and_needs_no_token(client):
     r = client.get("/api/health", headers={"Origin": ORIGIN, "Authorization": ""})
-    assert r.json() == {"ok": True, "name": "scanfit", "version": __version__}
+    assert r.json() == {"ok": True, "name": "phone2cad", "version": __version__}
     assert r.headers["access-control-allow-origin"] == ORIGIN
     assert "server" not in {k.lower() for k in r.headers}
 
@@ -170,18 +170,18 @@ def test_routes_need_the_pairing_token(client, auth):
 
 
 def test_server_refuses_to_start_without_a_token(monkeypatch, tmp_path):
-    monkeypatch.delenv("SCANFIT_TOKEN_FILE")
+    monkeypatch.delenv("PHONE2CAD_TOKEN_FILE")
     with pytest.raises(RuntimeError):
         main._token()
     (tmp_path / "t").write_text("short")
-    monkeypatch.setenv("SCANFIT_TOKEN_FILE", str(tmp_path / "t"))
+    monkeypatch.setenv("PHONE2CAD_TOKEN_FILE", str(tmp_path / "t"))
     with pytest.raises(RuntimeError):
         main._token()
 
 
 @pytest.mark.parametrize("bad", ["*", "http://evil.example", "https://a.example/path", "ftp://x"])
 def test_web_origin_is_validated(monkeypatch, bad):
-    monkeypatch.setenv("SCANFIT_WEB_ORIGIN", bad)
+    monkeypatch.setenv("PHONE2CAD_WEB_ORIGIN", bad)
     with pytest.raises(RuntimeError):
         main._origins()
 
@@ -195,7 +195,7 @@ def test_bad_ids_and_traversal(client):
     with pytest.raises(ValueError):
         jobs.job_dir("a" * 32 + "\n")
     r = client.post("/api/jobs").json()
-    assert client.get(f"/api/jobs/{r['id']}/result/..%2Fscanfit.db").status_code in (404, 409)
+    assert client.get(f"/api/jobs/{r['id']}/result/..%2Fphone2cad.db").status_code in (404, 409)
 
 
 # ---- uploads ------------------------------------------------------------------------
@@ -313,7 +313,7 @@ def test_malformed_jpeg_is_415_not_500(client, bad):
 
 def test_unexpected_error_is_a_plain_500_with_cors(client, monkeypatch):
     def boom(*_a):
-        raise OSError("/secret/path/scanfit.db is broken")
+        raise OSError("/secret/path/phone2cad.db is broken")
     monkeypatch.setattr(main.store, "get", boom)
     r = client.get("/api/jobs/" + "0" * 32, headers={"Origin": ORIGIN})
     assert r.status_code == 500 and "secret" not in r.text

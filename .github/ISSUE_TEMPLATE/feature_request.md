@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: An idea to make ScanFit more useful
+about: An idea to make Phone2CAD more useful
 labels: enhancement
 ---
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Checks that this PC is ready to run the ScanFit server. Changes nothing
+# Checks that this PC is ready to run the Phone2CAD server. Changes nothing
 # (it reads .env, which is a shell file: keep only KEY=value lines in it).
 # Each line says PASS, WARN (works, but not ideal) or FAIL (fix this first).
 set -uo pipefail
@@ -10,7 +10,7 @@ pass() { printf 'PASS  %s\n' "$1"; }
 warn() { printf 'WARN  %s\n' "$1"; warns=$((warns + 1)); }
 fail() { printf 'FAIL  %s\n' "$1"; fails=$((fails + 1)); }
 
-echo "ScanFit setup check"
+echo "Phone2CAD setup check"
 echo
 
 # --- Settings file ------------------------------------------------------------
@@ -70,14 +70,14 @@ fi
 
 # --- Network: Tailscale and certificates ------------------------------------------
 if ! command -v tailscale >/dev/null; then
-  fail "Tailscale is not installed. Install it (https://tailscale.com/download) and sign in on this PC and on your phone. ScanFit works over Tailscale only."
+  fail "Tailscale is not installed. Install it (https://tailscale.com/download) and sign in on this PC and on your phone. Phone2CAD works over Tailscale only."
 elif ! tailscale status >/dev/null 2>&1; then
   fail "Tailscale is installed but not connected. Run: sudo tailscale up"
 else
   pass "Tailscale is connected."
   name="$(tailscale status --json 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin)["Self"]["DNSName"].rstrip("."))' 2>/dev/null || true)"
-  [ -n "$name" ] && pass "This PC's private address: https://$name:${SCANFIT_PORT:-8443}"
-  cert_dir="${SCANFIT_CERT_DIR:-$HOME/.config/scanfit/certs}"
+  [ -n "$name" ] && pass "This PC's private address: https://$name:${PHONE2CAD_PORT:-8443}"
+  cert_dir="${PHONE2CAD_CERT_DIR:-$HOME/.config/phone2cad/certs}"
   crt="$cert_dir/server.crt"
   if [ -s "$crt" ]; then
     if openssl x509 -checkend 864000 -noout -in "$crt" >/dev/null 2>&1; then
@@ -95,7 +95,7 @@ else
 fi
 
 # --- Pairing code and stored scans ---------------------------------------------------
-token="${SCANFIT_TOKEN_FILE:-$HOME/.config/scanfit/token}"
+token="${PHONE2CAD_TOKEN_FILE:-$HOME/.config/phone2cad/token}"
 if [ ! -e "$token" ]; then
   pass "Pairing code: scripts/run-server will create one."
 elif [ "$(stat -c %a "$token")" = 600 ]; then
@@ -103,31 +103,31 @@ elif [ "$(stat -c %a "$token")" = 600 ]; then
 else
   fail "The pairing code ($token) is readable by others. Run: chmod 600 \"$token\""
 fi
-data="${SCANFIT_DATA_DIR:-$ROOT/data/server}"
+data="${PHONE2CAD_DATA_DIR:-$ROOT/data/server}"
 case "$(realpath -m "$data")" in
-  /mnt/*) warn "Scans are stored on a Windows drive ($data): any Windows program, and backup or sync tools, can read them. Set SCANFIT_DATA_DIR in .env to a folder under your Linux home.";;
+  /mnt/*) warn "Scans are stored on a Windows drive ($data): any Windows program, and backup or sync tools, can read them. Set PHONE2CAD_DATA_DIR in .env to a folder under your Linux home.";;
   *) pass "Scans are stored on the Linux file system.";;
 esac
-if [ -n "${SCANFIT_KEEP_FRAMES:-}" ] || [ "${SCANFIT_KEEP_FAILED:-0}" = 1 ]; then
-  warn "SCANFIT_KEEP_FRAMES is set: scan photos are kept in data/server/debug/ (debugging only). Empty it in .env when done, and delete that folder."
+if [ -n "${PHONE2CAD_KEEP_FRAMES:-}" ] || [ "${PHONE2CAD_KEEP_FAILED:-0}" = 1 ]; then
+  warn "PHONE2CAD_KEEP_FRAMES is set: scan photos are kept in data/server/debug/ (debugging only). Empty it in .env when done, and delete that folder."
 fi
 
 # --- Phone app address ---------------------------------------------------------------
-if [ -n "${SCANFIT_APP_URL:-}" ] || [ -n "${SCANFIT_WEB_ORIGIN:-}" ]; then
-  pass "Phone app address: ${SCANFIT_APP_URL:-$SCANFIT_WEB_ORIGIN}"
+if [ -n "${PHONE2CAD_APP_URL:-}" ] || [ -n "${PHONE2CAD_WEB_ORIGIN:-}" ]; then
+  pass "Phone app address: ${PHONE2CAD_APP_URL:-$PHONE2CAD_WEB_ORIGIN}"
 else
-  warn "No phone app address in .env: the default public app is used (see SCANFIT_APP_URL in .env.example)."
+  warn "No phone app address in .env: the default public app is used (see PHONE2CAD_APP_URL in .env.example)."
 fi
 
 # --- Mat scale ---------------------------------------------------------------------
-v="${SCANFIT_MAT_10_SQUARES_MM:-}"
+v="${PHONE2CAD_MAT_10_SQUARES_MM:-}"
 if [ -z "$v" ]; then
-  warn "Mat scale not set. Print the mat at 100 %, measure 10 squares of the printed ring with a ruler, and put the length in .env as SCANFIT_MAT_10_SQUARES_MM (150 if exact)."
+  warn "Mat scale not set. Print the mat at 100 %, measure 10 squares of the printed ring with a ruler, and put the length in .env as PHONE2CAD_MAT_10_SQUARES_MM (150 if exact)."
 elif python3 -c "import sys; v = float(sys.argv[1]); sys.exit(0 if 135 <= v <= 165 else 1)" "$v" 2>/dev/null; then
   pct=$(python3 -c "import sys; print(f'{(float(sys.argv[1]) / 150 - 1) * 100:+.1f}')" "$v")
   pass "Mat scale: 10 squares = $v mm (printer scaling ${pct} %)."
 else
-  fail "Mat scale SCANFIT_MAT_10_SQUARES_MM=$v looks wrong: 10 squares should measure about 150 mm."
+  fail "Mat scale PHONE2CAD_MAT_10_SQUARES_MM=$v looks wrong: 10 squares should measure about 150 mm."
 fi
 
 echo

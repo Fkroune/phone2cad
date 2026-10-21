@@ -1,4 +1,4 @@
-# ScanFit
+# Phone2CAD
 
 *Experimental hobby software: read the [Disclaimer](#disclaimer-experimental-software-use-at-your-own-risk) before relying on results.*
 
@@ -15,7 +15,7 @@ around it. The aim is errors under 1 mm: on the test parts, typical errors are
 a few tenths of a millimetre, and 28 of 30 dimensions were within 1 mm.
 
 Everything runs at home. The phone talks to your PC over your private network
-(Tailscale). No cloud processing, no ScanFit account, no fees; Tailscale needs
+(Tailscale). No cloud processing, no Phone2CAD account, no fees; Tailscale needs
 a free account of its own.
 
 ## Quick start
@@ -27,21 +27,21 @@ In short:
 1. **Set up the PC.** Install Docker and Tailscale (on Windows: inside WSL2),
    then in a Linux terminal:
    ```sh
-   git clone https://github.com/Fkroune/scanfit.git
-   cd scanfit
+   git clone https://github.com/Fkroune/phone2cad.git
+   cd phone2cad
    cp .env.example .env
    scripts/setup-check
    scripts/run-server
    ```
 2. **Print the mat and measure its scale.** Print
-   `web/static/scanfit-mat-a4.pdf` on A4 at 100 % ("actual size"). With a
+   `web/static/phone2cad-mat-a4.pdf` on A4 at 100 % ("actual size"). With a
    ruler, measure 10 squares in a row along the printed ring (150 mm when
-   exact) and put the length in `.env` as `SCANFIT_MAT_10_SQUARES_MM`. Then
+   exact) and put the length in `.env` as `PHONE2CAD_MAT_10_SQUARES_MM`. Then
    run `scripts/run-server` again. Skipping this leaves your printer's 1–3 %
    scaling error in every result.
 3. **Pair the phone and scan.** With the Tailscale app on, scan the QR code
    that `run-server` prints. The phone opens the app
-   ([scanfit-app.pages.dev](https://scanfit-app.pages.dev)), already linked to your
+   ([phone2cad-app.pages.dev](https://phone2cad-app.pages.dev)), already linked to your
    PC. Tap **Start scanning**, film the part all around, turn it over and film
    the other side.
 
@@ -100,9 +100,9 @@ of 30 (see [docs/accuracy.md](docs/accuracy.md), which has the details).
   part. Normal scans film both sides.
 - **Two-sided scans can occasionally lose part of the shape.** When the
   outlines of some photos miss a piece (an arm, a tab), the 3D copy comes out
-  with that piece missing. ScanFit looks for a piece that most outlines keep and
+  with that piece missing. Phone2CAD looks for a piece that most outlines keep and
   outlines those photos again. If that is not enough, the two sides' shapes no
-  longer match: ScanFit warns, and the outline photo ("Does this match your
+  longer match: Phone2CAD warns, and the outline photo ("Does this match your
   part?") shows it. If the green line misses part of the object, scan again,
   with the whole mat in view more often.
 - Inside corners come out rounded.
@@ -111,7 +111,7 @@ of 30 (see [docs/accuracy.md](docs/accuracy.md), which has the details).
 
 ## Documentation
 
-### Using ScanFit
+### Using Phone2CAD
 
 - [Getting started](docs/getting-started.md): set up the PC, the mat and the phone.
 - [Scanning guide](docs/scanning-guide.md): how to film for good results.
@@ -130,28 +130,28 @@ of 30 (see [docs/accuracy.md](docs/accuracy.md), which has the details).
 
 ## Disclaimer: experimental software, use at your own risk
 
-ScanFit is a free hobby project, shared for experimental and informational purposes. It is provided "as is" and "as available", without warranties of any kind, to the fullest extent permitted by applicable law. Sections 7 and 8 of the [Apache License 2.0](LICENSE) apply; this notice summarises them and does not replace them.
+Phone2CAD is a free hobby project, shared for experimental and informational purposes. It is provided "as is" and "as available", without warranties of any kind, to the fullest extent permitted by applicable law. Sections 7 and 8 of the [Apache License 2.0](LICENSE) apply; this notice summarises them and does not replace them.
 
-- **Results can be wrong.** ScanFit may fail, or produce incomplete or inaccurate 3D copies, measurements or STL files. Its ± values are estimates, not calibrated or certified measurements. ScanFit is not a measuring instrument.
-- **Verify before you rely on it.** Check critical dimensions with a suitable measuring tool before printing, machining or fitting a part. Do not use ScanFit outputs for safety-critical, medical, load-bearing, vehicle or other high-risk applications without appropriate independent validation.
-- **Your computer, your network, your data.** You run ScanFit's server on your own computer and network and are responsible for securing them. The software may contain defects or vulnerabilities and may cause loss, corruption or unintended disclosure of data. Keep independent backups of anything important. See [PRIVACY.md](PRIVACY.md) for where data goes.
+- **Results can be wrong.** Phone2CAD may fail, or produce incomplete or inaccurate 3D copies, measurements or STL files. Its ± values are estimates, not calibrated or certified measurements. Phone2CAD is not a measuring instrument.
+- **Verify before you rely on it.** Check critical dimensions with a suitable measuring tool before printing, machining or fitting a part. Do not use Phone2CAD outputs for safety-critical, medical, load-bearing, vehicle or other high-risk applications without appropriate independent validation.
+- **Your computer, your network, your data.** You run Phone2CAD's server on your own computer and network and are responsible for securing them. The software may contain defects or vulnerabilities and may cause loss, corruption or unintended disclosure of data. Keep independent backups of anything important. See [PRIVACY.md](PRIVACY.md) for where data goes.
 - **No support obligation.** The authors and contributors do not commit to maintenance, support, security updates, error correction, or availability of the hosted phone app.
-- **Third-party components and services** (such as COLMAP, SAM 2.1, OpenCV, Open3D, ONNX Runtime, Docker, Tailscale and Cloudflare) are governed by their own licences and terms; see [THIRD_PARTY.md](THIRD_PARTY.md). ScanFit is not affiliated with or endorsed by their owners.
+- **Third-party components and services** (such as COLMAP, SAM 2.1, OpenCV, Open3D, ONNX Runtime, Docker, Tailscale and Cloudflare) are governed by their own licences and terms; see [THIRD_PARTY.md](THIRD_PARTY.md). Phone2CAD is not affiliated with or endorsed by their owners.
 
-To the fullest extent permitted by applicable law, the authors and contributors are not liable for damages arising from the use of, inability to use, or reliance on ScanFit or its outputs, including data loss or corruption, damage to equipment or parts, financial loss and consequential damages.
+To the fullest extent permitted by applicable law, the authors and contributors are not liable for damages arising from the use of, inability to use, or reliance on Phone2CAD or its outputs, including data loss or corruption, damage to equipment or parts, financial loss and consequential damages.
 
 Nothing in this notice excludes or limits any liability, warranty or right that cannot lawfully be excluded or limited, such as liability for intent or gross negligence, or for injury to life, body or health where applicable law provides for it.
 
-By using ScanFit, you acknowledge that it is experimental and that you are responsible for judging whether it suits your intended use.
+By using Phone2CAD, you acknowledge that it is experimental and that you are responsible for judging whether it suits your intended use.
 
 ## Licence
 
 Apache-2.0 (see `LICENSE`). Third-party parts and their licences:
 [THIRD_PARTY.md](THIRD_PARTY.md). The test parts (the test block, the corner
-connector and the black jaw) and their STL files are ScanFit's own designs,
+connector and the black jaw) and their STL files are Phone2CAD's own designs,
 under the same Apache-2.0 licence. Attribution notices are in
 [NOTICE](NOTICE).
 
-The ScanFit name and logo are not licensed under Apache-2.0; forks must use a
+The Phone2CAD name and logo are not licensed under Apache-2.0; forks must use a
 different name. Future major versions may be released under a different
 licence; versions already released under Apache-2.0 remain so.
