@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.1
+
+- `scripts/run-server` fetches a new certificate when the PC was renamed on Tailscale (it kept the old name's certificate, which the phone rejects).
+
 ## v1.1.0
 
 ScanFit is now **Phone2CAD**. Same tool, a name that says what it does and is

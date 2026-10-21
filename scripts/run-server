@@ -56,8 +56,10 @@ fi
 mkdir -p "$PHONE2CAD_CERT_DIR" "$PHONE2CAD_DATA_DIR" "$(dirname "$PHONE2CAD_TOKEN_FILE")"
 chmod 700 "$PHONE2CAD_CERT_DIR" "$(dirname "$PHONE2CAD_TOKEN_FILE")"
 CRT="$PHONE2CAD_CERT_DIR/server.crt" KEY="$PHONE2CAD_CERT_DIR/server.key"
-# Tailscale certs last 90 days; refresh when older than 30.
-if [ ! -s "$CRT" ] || [ -n "$(find "$CRT" -mtime +30)" ]; then
+# Tailscale certs last 90 days; refresh when older than 30, or when it is not for
+# this PC's current name (the PC was renamed on Tailscale).
+cert_for_name() { ! command -v openssl >/dev/null || openssl x509 -in "$CRT" -noout -checkhost "$NAME" 2>/dev/null | grep -q " does match "; }
+if [ ! -s "$CRT" ] || [ -n "$(find "$CRT" -mtime +30)" ] || ! cert_for_name; then
   tailscale cert --cert-file "$CRT" --key-file "$KEY" "$NAME"
   NEW_CERT=1
 fi
