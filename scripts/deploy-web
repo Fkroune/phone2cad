@@ -23,12 +23,13 @@ python3 "$ROOT/scripts/privacy-scan" build || { echo "refusing to deploy: see th
 wrangler() { npx --no-install wrangler "$@"; }
 # Create the project only when the listing worked and lacks it (a transient API
 # error once made this branch try to re-create an existing project).
-# --force (only in wranglers that have it) keeps classic Pages (a *.pages.dev address
-# with no account name in it); those wranglers otherwise delegate to Workers.
-FORCE=(); wrangler pages project create --help 2>/dev/null | grep -q -- "--force" && FORCE=(--force)
+# --force keeps classic Pages (a *.pages.dev address with no account name in it);
+# recent wranglers otherwise delegate to Workers and fail. Their --help does not
+# list it, so try it and fall back for wranglers that reject it.
 if LIST="$(wrangler pages project list 2>/dev/null)"; then
   echo "$LIST" | grep -q "\b$PROJECT\b" \
-    || wrangler pages project create "$PROJECT" --production-branch main "${FORCE[@]}"
+    || wrangler pages project create "$PROJECT" --production-branch main --force \
+    || wrangler pages project create "$PROJECT" --production-branch main
 fi
 wrangler pages deploy build --project-name "$PROJECT" --branch main \
   --commit-hash "$(git -C "$ROOT" rev-parse HEAD)" --commit-message "$(git -C "$ROOT" log -1 --format=%s)"
