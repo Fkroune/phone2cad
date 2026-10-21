@@ -27,7 +27,11 @@ The app now knows the camera's lens and locks the colour, so the photos match.
 
 1. Circle the part slowly: once low (almost level with the table), once at mid
    height, once from high above.
-2. Go closer for detail. The mat may leave the picture now; that is fine.
+2. Go closer for detail. The mat may leave the picture now; that is fine, but
+   not for long: the PC places the close-ups by matching them to the frames that
+   show the whole mat. After 10 frames without it, the app says "Step back: show
+   the whole mat again". The counter shows how many of the frames show the
+   whole mat.
 3. Watch the **dome**: it shows which directions are filmed. The outlined cell
    is the next one to fill.
 4. Follow the hints: "Move slower", "Too dark: add light", "Get closer",

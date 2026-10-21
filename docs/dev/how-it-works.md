@@ -37,8 +37,11 @@ shiny plastic, where simple colour rules fail.
 All outlines are carved together: space that any two views see as "not the
 part" is removed. What is left is the part's shape (a "visual hull"). It does
 not need any surface texture. Where the part has texture, COLMAP's dense stereo
-adds detail. When both sides were filmed, the two halves are aligned by their
-shape and carved together.
+adds detail. Because two views are enough to remove space, a few outlines that
+leave out a piece (an arm, a tab) remove it: lumps of dense points that most
+outlines keep but the carved shape lost are found, and the photos that cut them
+away are outlined again with clicks inside the lump. When both sides were
+filmed, the two halves are aligned by their shape and carved together.
 
 ## 6. Measurements
 

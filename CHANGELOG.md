@@ -2,13 +2,31 @@
 
 ## v1.0.3
 
-Warnings for scans that can come out wrong without failing, an optional per-scan switch to
-keep the photos, and setup-check help.
+Fewer scans that lose a piece of the part, a warning when a two-sided scan may
+still be missing one, capture coaching to keep the whole mat in view, and an
+optional per-scan switch to keep the photos.
 
-- **A weak scan now says so.** The result page lists a note when fewer than 40 % of the
-  photos showed the whole mat, and when the two sides of a scan could not be lined up
-  reliably (the 3D copy may then be incomplete or too small). Before, such a scan ended
-  "Done" with a confident but wrong size.
+- **Outlines that leave out a piece are redone.** When some photos' outlines
+  cut away a piece that most outlines keep (an arm, a tab), the 3D copy used to
+  lose it. ScanFit now finds that piece from the texture points and outlines
+  those photos again with clicks inside it (about 3 minutes more, only when it
+  happens). The result page counts the outlines redone.
+- **Two-sided scans warn when the two sides' shapes match poorly.** If a piece
+  is still missing, the result now says so and points to the outline photo. See
+  the limits in the README.
+- A finished scan could be reported as failed ("processing stopped (code 134)")
+  when a library crashed while the worker was exiting. The worker now exits as
+  soon as the result is written.
+- **Accuracy tables are now from scratch.** The README and the accuracy page
+  show the six test scans processed from scratch, as a new scan would be; the
+  earlier numbers, which reused each scan's stored camera solve, are kept on
+  the accuracy page.
+- **Capture: "Step back: show the whole mat again".** After 10 kept frames
+  without the whole mat, the app asks for it (the PC places the close-ups from
+  those frames). The counter, the side-1 screen and the upload screen show how
+  many frames showed the whole mat.
+- The live 3D preview no longer stops the texture step when it reads a depth
+  map that COLMAP is still writing.
 - **Keep this scan's photos (optional, per scan).** A checkbox next to the scan
   button (home page and result page) asks your PC to keep that one scan's photos
   and COLMAP's working files until its result expires (24 hours), to diagnose a

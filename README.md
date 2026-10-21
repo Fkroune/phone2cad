@@ -60,41 +60,51 @@ Six real scans of two 3D-printed test parts with known CAD:
 - a corner connector, 39.5 × 39.5 × 36.8 mm;
 - a black jaw, 75 × 36 × 31.8 mm, with two Ø3.5 side holes.
 
-Each 3D copy was fitted onto its CAD and compared (October 2026).
+Each scan was processed from scratch, once, and its 3D copy fitted onto the CAD
+and compared (October 2026).
 
 | Scan | Typical error | Surface within 1 mm | Dimensions within their ± | Within 1 mm |
 |---|---|---|---|---|
-| Corner, one side | 0.22 mm | 83 % | 3 of 4 | 4 of 4 |
-| Corner, one side (2nd scan) | 0.21 mm | 82 % | 3 of 3 | 3 of 3 |
-| Corner, both sides | 0.21 mm | 95 % | 8 of 9 | 9 of 9 |
-| Corner, both sides (2nd scan) | 0.25 mm | 90 % | 7 of 8 | 8 of 8 |
-| Black jaw, both sides, no torch | 0.38 mm | 92 % | 2 of 3 | 2 of 3 |
-| Black jaw, both sides, torch | 0.42 mm | 82 % | 2 of 3 | 2 of 3 |
+| Corner, one side* | 0.25 mm | 87 % | 3 of 5 | 4 of 5 |
+| Corner, one side (2nd scan)* | 0.36 mm | 75 % | 2 of 2 | 2 of 2 |
+| Corner, both sides | 0.27 mm | 93 % | 9 of 9 | 9 of 9 |
+| Corner, both sides (2nd scan) | 0.32 mm | 89 % | 5 of 6 | 6 of 6 |
+| Black jaw, both sides, no torch | 0.39 mm | 92 % | 2 of 3 | 2 of 3 |
+| Black jaw, both sides, torch | 0.42 mm | 79 % | 2 of 3 | 2 of 3 |
 
-In total, 28 of 30 dimensions are within 1 mm of the CAD. Filming both sides of
-the part gives the best results. These results reuse the camera solve stored
-with each scan; processed from scratch, a scan can come out worse (see
-[known weaknesses](docs/accuracy.md#known-weaknesses)). Details:
-[docs/accuracy.md](docs/accuracy.md).
+\* One arm of the part is missing from the 3D copy; the result marks its overall
+size "may be incomplete".
+
+In total, 25 of 28 dimensions are within 1 mm of the CAD. Filming both sides of
+the part gives the best results: all four two-sided scans came out whole. With
+the camera solve stored with each scan reused instead, the same scans gave 28
+of 30 (see [docs/accuracy.md](docs/accuracy.md), which has the details).
 
 ![The corner part's CAD next to its 3D copy from a two-sided scan, coloured by distance to the CAD](docs/images/corner-vs-cad.png)
 
 ## Limits
 
-- **Holes are experimental.** Real holes are found, but they often read about
-  0.5 mm too small. Sometimes a hole is reported that is not there, and deep
+- **Holes are experimental.** Real holes are not always found, and they often
+  read about 0.5 mm too small. Sometimes a hole is reported that is not there, and deep
   threaded holes can be missed. Check holes before you rely on them.
-- **Sizes may read up to ~1.5 % large.** The shape is carved from the part's
+- **Sizes may read up to ~2 % large.** The shape is carved from the part's
   outlines, which can only err on the large side; on the test scans sizes read
-  0.4–1.65 % large (1.5 % is 0.6 mm on a 40 mm part). Check critical sizes with a
+  1.1–2.3 % large (2 % is 0.8 mm on a 40 mm part). Check critical sizes with a
   caliper. Fixing it is on the [roadmap](docs/dev/roadmap.md).
 - **Openings are filled in the 3D copy.** Hole sizes come from the photos
   instead.
 - **Quick scans may miss parts of the object.** A quick scan films one side
   only (for parts you cannot turn over). The camera never sees the underside,
   so parts of the object may be missing: its overall size is marked "may be
-  incomplete" and gets no grade. Re-processing the same frames can also differ
-  slightly. Normal scans film both sides.
+  incomplete" and gets no grade. Both one-sided test scans lost an arm of the
+  part. Normal scans film both sides.
+- **Two-sided scans can occasionally lose part of the shape.** When the
+  outlines of some photos miss a piece (an arm, a tab), the 3D copy comes out
+  with that piece missing. ScanFit looks for a piece that most outlines keep and
+  outlines those photos again. If that is not enough, the two sides' shapes no
+  longer match: ScanFit warns, and the outline photo ("Does this match your
+  part?") shows it. If the green line misses part of the object, scan again,
+  with the whole mat in view more often.
 - Inside corners come out rounded.
 - The part must fit in the clear centre of the mat (about 11 × 11 cm).
 - The phone app is tested on Chrome for Android only.

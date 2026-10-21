@@ -43,7 +43,8 @@ the span is drawn.
 Above the measurement list, the page shows one of your own photos with the 3D
 copy's outline drawn over it in green. If the line misses a part of the object
 (an arm, a tab) or wraps around something that is not the part, the scan went
-wrong: film again.
+wrong: film again. On a two-sided scan the result usually also warns that the
+two sides' shapes do not match well.
 
 ## What ± means
 
