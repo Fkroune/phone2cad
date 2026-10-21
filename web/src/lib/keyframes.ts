@@ -65,6 +65,10 @@ const MIN_TRAVEL = 0.15; // ...or moved (integrated |acceleration|, m/s)
 const DARK = 0.18;
 const GLARE = 0.03;
 const STILL_HINT_MS = 2000;
+// The PC places close-ups by matching them to frames that show the whole mat: after
+// this many kept frames without it, ask for one. On the test scans the best-measured
+// one never went past 9; the side whose solve varied most went 54 at the end.
+export const MAX_WITHOUT_MAT = 10;
 
 export type Kind = 'anchor' | 'detail';
 export type Band = 'far' | 'close';
@@ -120,6 +124,8 @@ export interface Moved {
 export class KeyframeSelector {
 	kept: View[] = []; // calibration views
 	details = 0;
+	matFrames = 0; // kept frames with the whole mat in view, calibration included
+	sinceMat = 0; // kept frames since the last one with the whole mat
 	cells = { far: new Set<number>(), close: new Set<number>() };
 	private perCell = new Map<string, number>();
 	private thumbs: Float32Array[] = [];
@@ -139,6 +145,19 @@ export class KeyframeSelector {
 
 	get total(): number {
 		return this.kept.length + this.details;
+	}
+
+	/** Share of the kept frames that show the whole mat, 0..1. */
+	get matShare(): number {
+		return this.total ? this.matFrames / this.total : 0;
+	}
+
+	get needsMat(): boolean {
+		return this.calibrated && this.sinceMat >= MAX_WITHOUT_MAT;
+	}
+
+	static wholeMat(a: Analysis): boolean {
+		return a.inView && a.markers >= MIN_MARKERS;
 	}
 
 	/** Where the camera is, seen from the part: from the mat pose, else from the sensors. */
@@ -210,6 +229,8 @@ export class KeyframeSelector {
 			return { kind: 'anchor', sharp, still };
 		}
 		if (this.details >= MAX_DETAILS || now - this.lastKeep < DETAIL_INTERVAL_MS) return no;
+		// Asked for the whole mat: keep it even when holding still on a familiar view.
+		if (this.needsMat && KeyframeSelector.wholeMat(a)) return { kind: 'detail', sharp, still };
 		if (KeyframeSelector.lighting(a)) return no;
 		if (still) return no;
 		const c = v ? this.cellOf(v) : null;
@@ -218,12 +239,16 @@ export class KeyframeSelector {
 		return { kind: 'detail', sharp, still };
 	}
 
-	accept(kind: Kind, v: View | null, thumb: Float32Array, frameSize: string, now: number): void {
+	accept(kind: Kind, v: View | null, thumb: Float32Array, frameSize: string, now: number, wholeMat: boolean): void {
 		this.size ??= frameSize;
 		this.lastKeep = now;
 		this.thumbs.push(thumb);
 		if (kind === 'anchor' && v) this.kept.push(v);
 		else this.details++;
+		if (wholeMat || kind === 'anchor') {
+			this.matFrames++;
+			this.sinceMat = 0;
+		} else this.sinceMat++;
 		const c = v ? this.cellOf(v) : null;
 		if (c !== null && v) {
 			this.cells[v.band].add(c);
@@ -280,6 +305,7 @@ export class KeyframeSelector {
 		}
 		if (this.total >= MAX_FRAMES) return 'All set. Tap Finish';
 		if (!sharp) return 'Move slower';
+		if (this.needsMat) return 'Step back: show the whole mat again';
 		const light = a ? KeyframeSelector.lighting(a) : null;
 		if (light === 'dark') return 'Too dark: add light';
 		if (light === 'glare') return 'Glare on the part: tilt the phone a little';

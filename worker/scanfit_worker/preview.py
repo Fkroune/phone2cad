@@ -78,7 +78,7 @@ def depth_points(dense_dir: Path, box, stride: int = 6) -> tuple[np.ndarray, lis
     sp, maps = Path(dense_dir) / "sparse", Path(dense_dir) / "stereo" / "depth_maps"
     try:
         images, cams = read_images_bin(sp / "images.bin"), read_pinhole_cameras_bin(sp / "cameras.bin")
-    except (OSError, struct.error, KeyError):
+    except (OSError, EOFError, struct.error, KeyError):  # still being written
         return np.zeros((0, 3)), []
     lo, hi = np.asarray(box[0]), np.asarray(box[1])
     pts, done = [], []
@@ -90,7 +90,7 @@ def depth_points(dense_dir: Path, box, stride: int = 6) -> tuple[np.ndarray, lis
             continue
         try:
             d = read_depth_map(f)
-        except (OSError, ValueError):
+        except (OSError, EOFError, ValueError):
             continue  # still being written
         w, _, K = cams[cid]
         s = d.shape[1] / w  # depth maps may be smaller than the undistorted image

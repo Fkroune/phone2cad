@@ -18,6 +18,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import threading
 import time
 import traceback
@@ -44,21 +45,6 @@ STAGES = {
     "measure": "Measuring",
     "done": "Done",
 }
-
-
-# A scan whose photos rarely show the whole mat, or whose two sides could not be
-# confirmed against each other, can come out too small yet look plausible: say so.
-MIN_MAT_SHARE = 0.4
-UNCONFIRMED_SIDES = ("The two sides could not be lined up reliably, so the 3D copy may be incomplete or too "
-                     "small. Compare it with the part, and film again with more of the mat in view.")
-
-
-def mat_view_warning(on_mat: int, frames: int, prefix: str = "") -> str | None:
-    """A note for the user when too few photos showed the whole mat, else None."""
-    if on_mat >= MIN_MAT_SHARE * frames:
-        return None
-    return (f"{prefix}Only {on_mat} of {frames} photos showed the whole mat. Film from a bit farther, so the "
-            "whole mat is in view most of the time: the camera positions and the size depend on it.")
 
 
 class LazyFrames:
@@ -286,6 +272,7 @@ class Side:
     masks: list = field(default_factory=list)
     core: np.ndarray | None = None  # sparse points the outlines call the object's
     mask_names: list = field(default_factory=list)  # the frames side.masks belong to
+    clicks: np.ndarray | None = None  # the part's points the outlines were prompted with
     box: tuple = None
     views: list = field(default_factory=list)
     D: np.ndarray = None
@@ -313,8 +300,6 @@ def _locate(side: Side, cm, ws: Path, progress, preview, log, f, prefix: str) ->
     on_mat = [n for n in side.names if n in cal.poses]
     progress.stat(f"{prefix}Frames showing the whole mat", f"{len(on_mat)}/{len(side.names)}")
     progress.stat(f"{prefix}Lens fit", f"{cal.rms_px:.1f} px")
-    if note := mat_view_warning(len(on_mat), len(side.names), prefix):
-        progress.warn(note)
     if cal.bend_mm > 0.5:
         progress.stat(f"{prefix}Mat bend", f"{cal.bend_mm:.1f} mm")
     if cal.bend_mm > 1.0:
@@ -452,6 +437,7 @@ def _solve_side(side: Side, cm, work: Path, dense: str, use_gpu: bool, progress,
         side.D, side.DG, side.V = dense_cpu.reconstruct(LazyFrames(side.frames_dir, side.names), cal, side.views,
                                                         _zone(), log=log)
     progress.stat(f"{prefix}Dense points", int(len(side.D)))
+    _fix_cut_outlines(side, progress, log, f, prefix)
     return side
 
 
@@ -781,7 +767,7 @@ def _outline(side: Side, cal, used, progress, preview, log, f, prefix) -> list[s
         parts.append(out[1])
         names.append(n)
         preview.frame(img, out[1], f"{prefix}Outlining the part in frame {k + 1}/{len(views)}")
-    side.masks = masks
+    side.masks, side.clicks = masks, inside
     final = _main_cluster(_vote(sparse, masks, parts)) if masks else np.zeros((0, 3))
     side.core = final if len(final) >= 30 else core
     # The box only has to hold the part (the carving makes the shape): the one
@@ -790,10 +776,103 @@ def _outline(side: Side, cal, used, progress, preview, log, f, prefix) -> list[s
     side.box = (np.r_[box[0][:2], 0.0], box[1])
     return names
 
+
+# A piece of the part some outlines left out. Carving keeps only what every
+# outline keeps, so a third of the outlines each shaving 1-2 mm off an arm lying
+# on the mat lost the whole arm (a test scan). Votes alone cannot tell such a
+# piece from empty space only a few views see into (the inner corner between
+# two arms); the dense points can: they come from texture, not from the
+# outlines, and there are none in empty space.
+LOST_OUTSIDE_MM = 1.5  # beyond the carved shape's surface noise
+LOST_KEEP = 1 / 3  # carved by fewer than this share of the views that see the point
+LOST_MIN_POINTS = 40  # a lump of at least this many dense points (and 2 % of the side's)
+LOST_CUT = 0.2  # an outline calling this share of a lump background cut it away
+
+
+def _bg_votes(P: np.ndarray, masks: list) -> tuple[np.ndarray, np.ndarray]:
+    """Per outline (rows): which points it calls background, and which it sees."""
+    B, S = np.zeros((len(masks), len(P)), bool), np.zeros((len(masks), len(P)), bool)
+    for i, v in enumerate(masks):
+        Xc = P @ v.R.T + v.t
+        z = Xc[:, 2]
+        u = np.round(v.K[0, 0] * Xc[:, 0] / np.maximum(z, 1e-6) + v.K[0, 2]).astype(np.int64)
+        w = np.round(v.K[1, 1] * Xc[:, 1] / np.maximum(z, 1e-6) + v.K[1, 2]).astype(np.int64)
+        S[i] = (z > 1e-3) & (u >= 0) & (w >= 0) & (u < v.background.shape[1]) & (w < v.background.shape[0])
+        B[i, S[i]] = v.background[w[S[i]], u[S[i]]]
+    return B, S
+
+
+def _lost_lumps(side: Side) -> list[np.ndarray]:
+    """Lumps of dense points well outside the carved shape that most outlines keep."""
+    if side.D is None or len(side.masks) < 6:
+        return []
+    lo, hi = side.box
+    P = side.D[(side.D[:, 2] > 1.0) & np.all((side.D >= lo) & (side.D <= hi), axis=1)]
+    H, vox = silhouette.visual_hull(side.box, side.masks, voxel=max(1.0, 2 * _voxel_for(side.box)))
+    if len(P) < LOST_MIN_POINTS or not len(H):
+        return []
+    big = max(LOST_MIN_POINTS, 0.02 * len(P))
+    P = P[~np.isfinite(cKDTree(H).query(P, distance_upper_bound=LOST_OUTSIDE_MM + vox / 2)[0])]
+    B, S = _bg_votes(P, side.masks)
+    votes, seen = B.sum(0), S.sum(0)
+    Q = P[(seen >= 3) & (votes < LOST_KEEP * seen)]
+    if len(Q) < LOST_MIN_POINTS:
+        return []
+    lab = np.asarray(o3d.geometry.PointCloud(o3d.utility.Vector3dVector(Q)).cluster_dbscan(eps=2.0, min_points=5))
+    return [Q[lab == k] for k in range(lab.max() + 1) if (lab == k).sum() >= big]
+
+
+def _cut_share(lumps: list[np.ndarray], masks: list) -> np.ndarray:
+    """Per outline, the largest share of one lump it calls background."""
+    return np.max([_bg_votes(L, masks)[0].mean(1) for L in lumps], axis=0)
+
+
+def _fix_cut_outlines(side: Side, progress, log, f, prefix) -> None:
+    """Outlines that cut away a piece most others keep: outlined again with clicks
+    on that piece, kept if the new outline cuts less of it. (Leaving such outlines
+    out instead also kept the arm on the test scan, but with half the outlines
+    gone the shape came out fatter: median error 0.27 mm against 0.21.)"""
+    lumps = _lost_lumps(side)
+    if not lumps:
+        return
+    cut = _cut_share(lumps, side.masks)
+    bad = [int(i) for i in np.flatnonzero(cut >= LOST_CUT)]
+    log(f"{side.tag}: {len(lumps)} piece(s) most outlines keep ({sum(map(len, lumps))} dense points, "
+        f"{[np.round(L.mean(0), 0).tolist() for L in lumps]}) cut away by {len(bad)} of {len(side.masks)} outlines")
+    if not bad:
+        return
+    from . import segment
+    seg = segment.Outliner(side.cal, segment.Segmenter())
+    piece = np.vstack(lumps)
+    fixed = 0
+    for k, i in enumerate(bad):
+        progress("dense", f(1.0), quiet=True, step=f"{prefix}Outlining frame {k + 1}/{len(bad)} again: it left out part of the object")
+        n = side.mask_names[i]
+        img = cv2.imread(str(side.frames_dir / n), cv2.IMREAD_COLOR)
+        out = seg(img, n, side.box, side.clicks, _mat_points(side.box), extra_pts=piece) if img is not None else None
+        if out is not None and _cut_share(lumps, [out[0]])[0] < cut[i]:
+            side.masks[i] = out[0]
+            fixed += 1
+    log(f"{side.tag}: outlined {len(bad)} frames again, {fixed} now cut less of the piece")
+    progress.stat(f"{prefix}Outlines redone (they left out part of the object)", f"{fixed}/{len(bad)}")
+
+
+# Rough match of the two sides' outline shapes. Below this fitness the two shapes
+# disagree: on the test scans that meant one side's outlines had missed an arm (the
+# sides themselves lined up within a degree and a millimetre), so the copy lost it.
+# Calibrated on replays of the test scans: an arm was lost at 0.38-0.66, kept at 0.74-0.83.
+# A weak match is retried with more seeds first, in case RANSAC missed the right one.
+MIN_SIDE_FITNESS = 0.70
+SIDE_SEEDS, SIDE_RETRY_SEEDS = 8, 32
+UNSURE_SIDES = ("The two sides' shapes do not match well, so part of the 3D copy may be missing: "
+                "check the outline photo and scan again.")
+
+
 def _align_sides(a: Side, b: Side, log, warn=lambda msg: None) -> tuple[np.ndarray, float]:
     """4x4 taking side b's mat coordinates into side a's: the part was flipped
     and moved. Rough match of the two hulls' shapes (each side's own carving),
     then point-to-plane ICP on the dense points near them (the true surfaces).
+    A weak rough match is retried with more RANSAC seeds; warns if it stays weak.
     Also returns the fit's rms (mm), the mismatch the joint carve must allow."""
     reg = o3d.pipelines.registration
     clouds = []
@@ -814,43 +893,55 @@ def _align_sides(a: Side, b: Side, log, warn=lambda msg: None) -> tuple[np.ndarr
         d.estimate_normals(o3d.geometry.KDTreeSearchParamHybrid(radius=2.5, max_nn=30))
         feats.append((d, reg.compute_fpfh_feature(d, o3d.geometry.KDTreeSearchParamHybrid(radius=5.0, max_nn=100))))
     (sb, fb), (sa, fa) = feats
-    cands = []
-    for seed in range(8):
-        o3d.utility.random.seed(seed)
-        g = reg.registration_ransac_based_on_feature_matching(
-            sb, sa, fb, fa, True, 1.5, reg.TransformationEstimationPointToPoint(False), 3,
-            [reg.CorrespondenceCheckerBasedOnEdgeLength(0.9), reg.CorrespondenceCheckerBasedOnDistance(1.5)],
-            reg.RANSACConvergenceCriteria(200000, 0.999))
-        cands.append(reg.registration_icp(hb, ha, 1.5, g.transformation, reg.TransformationEstimationPointToPlane()))
-    # A long or symmetric part also matches turned end-for-end: try the 180 degree
-    # turns about side b's main axes too.
-    top = max(cands, key=lambda c: c.fitness)
-    B = np.asarray(hb.points)
+    A, B = np.asarray(ha.points), np.asarray(hb.points)
     cB = B.mean(0)
-    for axis in np.linalg.eigh(np.cov((B - cB).T))[1].T:
-        F = np.eye(4)
-        F[:3, :3] = 2 * np.outer(axis, axis) - np.eye(3)
-        F[:3, 3] = cB - F[:3, :3] @ cB
-        cands.append(reg.registration_icp(hb, ha, 1.5, np.asarray(top.transformation) @ F,
-                                          reg.TransformationEstimationPointToPlane()))
+
+    def ransac(seeds) -> list:
+        out = []
+        for seed in seeds:
+            o3d.utility.random.seed(seed)
+            g = reg.registration_ransac_based_on_feature_matching(
+                sb, sa, fb, fa, True, 1.5, reg.TransformationEstimationPointToPoint(False), 3,
+                [reg.CorrespondenceCheckerBasedOnEdgeLength(0.9), reg.CorrespondenceCheckerBasedOnDistance(1.5)],
+                reg.RANSACConvergenceCriteria(200000, 0.999))
+            out.append(reg.registration_icp(hb, ha, 1.5, g.transformation, reg.TransformationEstimationPointToPlane()))
+        # A long or symmetric part also matches turned end-for-end: try the 180 degree
+        # turns about side b's main axes too.
+        top = max(out, key=lambda c: c.fitness)
+        for axis in np.linalg.eigh(np.cov((B - cB).T))[1].T:
+            F = np.eye(4)
+            F[:3, :3] = 2 * np.outer(axis, axis) - np.eye(3)
+            F[:3, 3] = cB - F[:3, :3] @ cB
+            out.append(reg.registration_icp(hb, ha, 1.5, np.asarray(top.transformation) @ F,
+                                            reg.TransformationEstimationPointToPlane()))
+        return out
+
     # The right alignment is the one where each side's views carve least of the
     # other side's shape (a wrong turn cuts the part to pieces).
-    A = np.asarray(ha.points)
-
     def kept(c) -> float:
         T = np.asarray(c.transformation)
         Ti = np.linalg.inv(T)
         return 0.5 * (silhouette.carve(B @ T[:3, :3].T + T[:3, 3], a.masks).mean()
                       + silhouette.carve(A @ Ti[:3, :3].T + Ti[:3, 3], b.masks).mean())
 
-    # Only candidates whose shapes actually meet (at least half the best match).
-    fmax = max(c.fitness for c in cands)
-    scores = [kept(c) if c.fitness >= 0.5 * fmax else -1.0 for c in cands]
-    best = cands[int(np.argmax(scores))]
+    def pick(cands):
+        # Only candidates whose shapes actually meet (at least half the best match).
+        fmax = max(c.fitness for c in cands)
+        scores = [kept(c) if c.fitness >= 0.5 * fmax else -1.0 for c in cands]
+        return cands[int(np.argmax(scores))], scores
+
+    cands = ransac(range(SIDE_SEEDS))
+    best, scores = pick(cands)
+    if best.fitness < MIN_SIDE_FITNESS:
+        log(f"sides matched weakly (fitness {best.fitness:.2f}): retrying with {SIDE_RETRY_SEEDS} more seeds")
+        cands += ransac(range(SIDE_SEEDS, SIDE_SEEDS + SIDE_RETRY_SEEDS))
+        best, scores = pick(cands)
     T, rms = best.transformation, best.inlier_rmse
     log(f"sides lined up on the outlines: fitness {best.fitness:.2f}, rms {best.inlier_rmse:.2f} mm, "
         f"{max(scores):.0%} of each side's shape agrees with the other's views "
         f"(other candidates {max(sorted(scores)[-2], 0):.0%} and below)")
+    if best.fitness < MIN_SIDE_FITNESS:
+        warn(UNSURE_SIDES)
     if len(da.points) > 500 and len(db.points) > 500:
         da.estimate_normals(o3d.geometry.KDTreeSearchParamHybrid(radius=1.5, max_nn=30))
         fine = reg.registration_icp(db, da, 1.0, T, reg.TransformationEstimationPointToPlane())
@@ -859,10 +950,8 @@ def _align_sides(a: Side, b: Side, log, warn=lambda msg: None) -> tuple[np.ndarr
             log(f"refined on the dense points: fitness {fine.fitness:.2f}, rms {fine.inlier_rmse:.2f} mm")
         else:
             log(f"dense points did not agree well enough to refine (fitness {fine.fitness:.2f})")
-            warn(UNCONFIRMED_SIDES)
     else:
         log(f"too few dense points near the outlines to refine ({len(da.points)}, {len(db.points)})")
-        warn(UNCONFIRMED_SIDES)
     return np.asarray(T), float(rms)
 
 
@@ -1069,6 +1158,12 @@ def main() -> None:
     ap.add_argument("--keep", action="store_true", help="keep frames and work dir (debug only)")
     a = ap.parse_args()
     run(a.job, a.dense, a.max_image_size, a.keep)
+    # The result is written. Skip the interpreter's teardown: a native library's
+    # thread can abort it ("terminate called without an active exception", code
+    # 134), and the server would then report a finished scan as failed.
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0)
 
 
 if __name__ == "__main__":

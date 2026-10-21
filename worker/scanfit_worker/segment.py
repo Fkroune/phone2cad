@@ -185,9 +185,11 @@ class Outliner:
         return ViewMask(sure_bg, K, R, t), part
 
     def __call__(self, image: np.ndarray, name: str, box, part_pts=None, mat_pts=None,
-                 n_pos: int = 16, n_neg: int = 8) -> tuple[ViewMask, np.ndarray] | None:
+                 n_pos: int = 16, n_neg: int = 8, extra_pts=None, n_extra: int = 8) -> tuple[ViewMask, np.ndarray] | None:
         """Outline prompted by the part's 3D box and points (projected). None when
-        the box is not in this frame or the mask is not believable."""
+        the box is not in this frame or the mask is not believable. extra_pts: more
+        of the part's points, n_extra of them clicked wherever they fall in the frame
+        (a piece other outlines left out)."""
         und, K, R, t = self.frame(image, name)
         h, w = und.shape[:2]
         uv, front = _project(_box_corners(box), K, R, t)
@@ -212,8 +214,10 @@ class Outliner:
         if part_pts is not None and len(part_pts):
             q, okq = _project(part_pts, K, R, t)
             check = q[okq]
-        return self.outline2d(und, K, R, t, (x0, y0, x1, y1), pick(part_pts, n_pos, True), pick(mat_pts, n_neg, False),
-                              check=check)
+        pos = pick(part_pts, n_pos, True)
+        if extra_pts is not None and len(extra_pts):
+            pos += pick(extra_pts, n_extra, True) + pick(extra_pts, n_extra, False)
+        return self.outline2d(und, K, R, t, (x0, y0, x1, y1), pos, pick(mat_pts, n_neg, False), check=check)
 
     def seed(self, image: np.ndarray, name: str, rough: np.ndarray, page: np.ndarray, mat_pts,
              n_pos: int = 5, n_neg: int = 10) -> tuple[ViewMask, np.ndarray] | None:

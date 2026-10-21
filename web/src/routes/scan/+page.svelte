@@ -25,6 +25,8 @@
 	let error = $state('');
 	let calViews = $state(0);
 	let count = $state(0); // all kept frames
+	let matPct = $state(0); // share of them showing the whole mat
+	let side1MatPct = $state(0);
 	let far = $state(new Set<number>());
 	let close = $state(new Set<number>());
 	let current = $state<View | null>(null);
@@ -58,6 +60,7 @@
 		instruction = side === 1 ? `Sending to ${pc}` : `Sending the other side to ${pc}`;
 		total = frames.length;
 		sent = 0;
+		if (side === 1) side1MatPct = matPct;
 		try {
 			jobId ??= (await createJob(getKeepPhotos())).id;
 			const id = jobId;
@@ -100,6 +103,7 @@
 		selector = new KeyframeSelector(mat); // fresh calibration: the part (and maybe the mat) moved
 		calViews = 0;
 		count = 0;
+		matPct = 0;
 		far = new Set();
 		close = new Set();
 		current = null;
@@ -195,11 +199,12 @@
 			current = v;
 			if (d.kind && running) {
 				const wasCalibrated = selector.calibrated;
-				selector.accept(d.kind, v, thumb, size, now);
+				selector.accept(d.kind, v, thumb, size, now, KeyframeSelector.wholeMat(a));
 				motion.mark();
 				frames.push(await encodeJpeg(bmp));
 				calViews = selector.kept.length;
 				count = selector.total;
+				matPct = Math.round(100 * selector.matShare);
 				far = new Set(selector.cells.far);
 				close = new Set(selector.cells.close);
 				flash = true;
@@ -239,7 +244,7 @@
 					{#if calViews < CAL_FRAMES}
 						<b>{calViews}</b><span>/ {CAL_FRAMES} calibration views</span>
 					{:else}
-						<b>{count}</b><span>frames · calibrated{locked.length ? ' · colour locked' : ''}</span>
+						<b>{count}</b><span>frames · whole mat in {matPct} %{locked.length ? ' · colour locked' : ''}</span>
 					{/if}
 				</div>
 			</div>
@@ -254,7 +259,7 @@
 			</div>
 		{:else if phase === 'flip'}
 			<p class="choice">
-				<b>Side 1 sent.</b> Turn the part over onto another face, put it back in the marked zone,
+				<b>Side 1 sent</b> (whole mat in {side1MatPct} % of the frames). Turn the part over onto another face, put it back in the marked zone,
 				then film it all around again.
 			</p>
 			<div class="row">
@@ -262,7 +267,7 @@
 				<button class="btn grow" onclick={filmOtherSide}>Film side 2</button>
 			</div>
 		{:else if phase === 'uploading'}
-			<p>Sending {sent} of {total}</p>
+			<p>Sending {sent} of {total} · whole mat in {matPct} % of the frames</p>
 			<div class="bar"><i style:width={`${(100 * sent) / Math.max(1, total)}%`}></i></div>
 		{:else}
 			<p class="err">{error}</p>
