@@ -8,12 +8,15 @@ On the black test jaw, the photo hole finder finds both real side holes but
 reads them 0.4–0.7 mm small (Ø3.1 and Ø2.8 for Ø3.5). It also reports a false
 hole next to one of them, and misses a threaded Ø6.5 hole inside a shallow
 recess. A false hole also appeared once on a two-sided corner scan.
+Processed from scratch (v1.0.3), the two jaw scans found only one of their four
+side holes between them, and two corner scans reported false holes.
 Ideas: check whether the rim is taken on the inside of the lit edge; ask SAM to
 outline the hole itself; ask for square-on close-ups of faces with holes.
 Goal: no false holes on the test scans; side holes within ±0.3 mm.
 
-## 2. Systematic oversize +0.4–1.65 %: needs caliper-checked prints from contributors; test outline erosion
-On all six test scans, sizes read 0.4–1.65 % large. The shape is carved from
+## 2. Systematic oversize +1.1–2.3 %: needs caliper-checked prints from contributors; test outline erosion
+On all six test scans processed from scratch (v1.0.3), sizes read 1.1–2.3 %
+large (0.4–1.65 % when each scan's stored camera solve was reused). The shape is carved from
 the part's outlines (a visual hull), which can only be too big where an
 outline is a little wide or a view is missing. Wanted from contributors:
 prints of simple parts measured with a caliper, scanned, with the numbers
@@ -28,9 +31,22 @@ Processing the same frames twice gives slightly different camera positions
 scan, a fresh solve kept only one arm of the part. Goal: the same frames give
 the same faces, or the app says the result is unsure.
 
-## 4. Quick scans (one side): coverage
-Quick scans cover less of the part than two-sided ones. Compare outlines
-frame by frame on the test scans; look at the far side and near the mat.
+## 4. Quick scans (one side): an arm can still be lost
+Quick scans cover less of the part than two-sided ones. Processed from scratch
+(v1.0.3), both one-sided corner scans lost an arm. Redoing the outlines that
+cut away a piece brought one of two lost arms back on the first scan, but not
+the other: the remaining outlines still cut part of it away, and two views are
+enough to carve. Ideas: re-check the piece after the redo and outline again
+the views that still cut it; carve that piece with a higher vote threshold.
+Goal: both one-sided test scans come out whole from scratch.
+
+## 4b. False "the two sides' shapes do not match well" warning
+On the torch jaw scan (v1.0.3, from scratch) the two sides matched at 0.54,
+below the 0.70 warning threshold, although nothing was missing. Whole shapes
+scored 0.74–0.86 on the other scans, and shapes missing an arm 0.38–0.66.
+Ideas: score the match only where both sides see the part; take the part's
+size into account. Goal: no warning on a whole test scan, still a warning on
+every scan that lost a piece.
 
 ## 5. More image cues for hard parts
 Dark, shiny or low-contrast parts need more than one cue. A shared toolbox:
