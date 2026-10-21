@@ -72,7 +72,10 @@ Each 3D copy was fitted onto its CAD and compared (October 2026).
 | Black jaw, both sides, torch | 0.42 mm | 82 % | 2 of 3 | 2 of 3 |
 
 In total, 28 of 30 dimensions are within 1 mm of the CAD. Filming both sides of
-the part gives the best results. Details: [docs/accuracy.md](docs/accuracy.md).
+the part gives the best results. These results reuse the camera solve stored
+with each scan; processed from scratch, a scan can come out worse (see
+[known weaknesses](docs/accuracy.md#known-weaknesses)). Details:
+[docs/accuracy.md](docs/accuracy.md).
 
 ![The corner part's CAD next to its 3D copy from a two-sided scan, coloured by distance to the CAD](docs/images/corner-vs-cad.png)
 

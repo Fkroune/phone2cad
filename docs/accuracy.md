@@ -18,6 +18,11 @@ position, no scaling, so size errors stay visible). Then:
 - **dimensions**: each measured width, height or hole was compared with the
   same measurement taken on the CAD.
 
+Each scan was re-processed from the camera solve stored with it (the step that
+works out where each photo was taken from); only the steps after it were run
+again. Processing the frames from scratch can give a worse result: see
+repeatability below.
+
 ## Results (October 2026)
 
 | Scan | Typical error | Surface within 1 mm | Dimensions within their ± | Within 1 mm | Holes |
@@ -42,8 +47,14 @@ position, no scaling, so size errors stay visible). Then:
 - **Holes** (experimental): real side holes read 0.4–0.7 mm small. False holes
   appeared on two scans. A threaded hole inside a shallow recess was missed.
 - **Repeatability**: processing the same frames twice gives slightly different
-  camera positions (median 0.14 mm). On one one-sided scan, a fresh solve kept
-  only one arm of the part.
+  camera positions (median 0.14 mm), and that can change the 3D copy much more.
+  Processed from scratch six times, the first two-sided corner scan lost one
+  arm of the part in 5 of the 6 runs; on one one-sided scan, a fresh solve also
+  kept only one arm. The table's results do not show this, because they reuse
+  each scan's stored camera solve. A missing arm or tab shows on the result
+  page's outline photo (see
+  [reading the results](reading-results.md#does-this-match-your-part)): if the
+  green line misses part of the object, scan again.
 - **Sizes read large**: on every test scan, the scale came out 0.4–1.65 %
   large, so sizes may read up to ~1.5 % large. The shape is carved from the
   part's outlines (shape from outlines), which can only err outwards. See the
