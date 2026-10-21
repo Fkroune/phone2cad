@@ -112,8 +112,7 @@ Maintenance: removed unused code and dependencies; no behaviour change.
 - `scripts/run-server`: Tailscale-only HTTPS server and a QR code that pairs
   the phone.
 - Prebuilt server image on the GitHub Container Registry (on version tags).
-- Public phone app at https://scanfit-app.pages.dev (`run-server` uses it by
-  default).
+- Public phone app (`run-server` uses it by default), first at `scanfit-app`, now at https://phone2cad-app.pages.dev.
 
 ### Security and privacy hardening (before release)
 - **Pairing code:** `run-server` creates a random code (readable only by you)

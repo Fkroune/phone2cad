@@ -101,6 +101,7 @@ each should be closed.
   release workflow) and document how to verify it before `docker pull`.
 
 ## Also wanted
+- Refresh the capture screenshot with the new mat (old caption still visible).
 - Parts larger than the mat.
 - Testing on iPhone and other Android phones.
 - A LAN setup without Tailscale that is easy for non-experts.
